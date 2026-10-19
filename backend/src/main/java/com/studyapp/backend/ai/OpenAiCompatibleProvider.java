@@ -43,7 +43,9 @@ public class OpenAiCompatibleProvider implements AiProvider {
 
     @Override
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank() && !apiKey.equalsIgnoreCase("your-api-key-here");
+        return apiKey != null && !apiKey.isBlank() 
+            && !apiKey.equalsIgnoreCase("your-api-key-here")
+            && !apiKey.equalsIgnoreCase("your-groq-api-key-here");
     }
 
     @Override

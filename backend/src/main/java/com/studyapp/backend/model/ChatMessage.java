@@ -34,6 +34,15 @@ public class ChatMessage {
     @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String content;
 
+    @Column(columnDefinition = "MEDIUMTEXT")
+    private String citationsJson;
+
+    @Builder.Default
+    private Double groundingConfidence = 0.0;
+
+    @Builder.Default
+    private Boolean isDocumentGrounded = false;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

@@ -30,6 +30,9 @@ public class TutorDto {
         private String message;
         private String explanationStyle; // concise, detailed, exam-oriented
         private String academicLevel;
+        private List<Long> documentIds;
+        @Builder.Default
+        private Boolean useDocumentGrounding = true;
     }
 
     @Getter
@@ -56,6 +59,9 @@ public class TutorDto {
         private Long id;
         private String role;
         private String content;
+        private List<RagCitationDto> citations;
+        private Double groundingConfidence;
+        private Boolean isDocumentGrounded;
         private LocalDateTime createdAt;
     }
 
@@ -68,5 +74,8 @@ public class TutorDto {
         private MessageResponse userMessage;
         private MessageResponse assistantMessage;
         private List<String> suggestedFollowUps;
+        private List<RagCitationDto> citations;
+        private Double groundingConfidence;
+        private Boolean isDocumentGrounded;
     }
 }

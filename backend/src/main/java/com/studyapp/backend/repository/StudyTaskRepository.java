@@ -10,7 +10,9 @@ import java.util.Optional;
 @Repository
 public interface StudyTaskRepository extends JpaRepository<StudyTask, Long> {
     List<StudyTask> findByUserIdOrderByDueDateAsc(Long userId);
+    List<StudyTask> findByUserIdOrderByCreatedAtDesc(Long userId);
     List<StudyTask> findByUserIdAndSubjectIdOrderByDueDateAsc(Long userId, Long subjectId);
     Optional<StudyTask> findByIdAndUserId(Long id, Long userId);
     long countByUserId(Long userId);
+    long countByUserIdAndStatus(Long userId, String status);
 }

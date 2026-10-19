@@ -27,6 +27,7 @@ import AnalyticsPage from './pages/app/AnalyticsPage';
 import TimerPage from './pages/app/TimerPage';
 import HistoryPage from './pages/app/HistoryPage';
 import SettingsPage from './pages/app/SettingsPage';
+import YouTubeFinderPage from './pages/app/YouTubeFinderPage';
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -86,6 +87,7 @@ function AppRoutes() {
         <Route path="/timer" element={<TimerPage />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/youtube-finder" element={<YouTubeFinderPage />} />
       </Route>
 
       {/* 404 Fallback */}

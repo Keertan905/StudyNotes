@@ -32,6 +32,8 @@ pnpm-debug.log*
 .env.local
 .env.*.local
 *.local
+*-local.properties
+application-local.properties
 
 # File Uploads and Runtime Storage
 uploads/
