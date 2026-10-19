@@ -79,10 +79,11 @@ npm run dev
   - [x] Flashcard Deck Manager with subject filtering, search, deck mastery analytics, and manual flashcard creation modal
   - [x] Customizable Focus & Pomodoro Timer (`/timer`) with animated SVG progress ring, presets (Focus, Breaks, Custom), and audio/visual alerts
   - [x] Session Task Management & Productivity Tracker with quick task additions, completion checkboxes, and study streak statistics
-- [ ] **Phase 5: Knowledge Gap Detector, Mistake Intelligence Engine, and Adaptive Recommendations**
+- [x] **Phase 5: Knowledge Gap Detector, Mistake Intelligence Engine, and Adaptive Recommendations**
+  - [x] Database entities & repositories: `MistakeRecord` with category classification, root-cause diagnosis, and retry tracking
+  - [x] Knowledge Gap Detector algorithm computing per-topic accuracy, mastery levels (Weak, Moderate, Strong), and memory decay risks (>7 days)
+  - [x] Mistake Intelligence Engine (`/mistakes`) with AI misconception root cause, actionable exam rules, and direct inline re-attempt drawer
+  - [x] Adaptive Study Recommendations engine (`/knowledge-gaps`) prioritizing weak topics, overdue SM-2 reviews, and unmastered errors with 1-click launch actions
 - [ ] **Phase 6: Exam Countdown Study Planner, Readiness Score, and Progress Dashboard**
 - [ ] **Phase 7: Document-Grounded Question Answering (RAG/Doc Q&A), Citations, and Document Management**
 - [ ] **Phase 8: Notifications, Accessibility, Security Review, Testing, and Documentation**
-=======
-# StudyNotes
->>>>>>> b2936402df179311ab855df92be694329b74ade3

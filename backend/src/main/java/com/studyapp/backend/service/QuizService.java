@@ -30,6 +30,7 @@ public class QuizService {
     private final UnitRepository unitRepository;
     private final TopicRepository topicRepository;
     private final UserRepository userRepository;
+    private final MistakeService mistakeService;
     private final AiProvider aiProvider;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -429,6 +430,14 @@ public class QuizService {
                     .build();
 
             userAnswerRepository.save(userAnswer);
+
+            if (!isCorrect) {
+                try {
+                    mistakeService.recordMistake(user, q, attempt, studentAns);
+                } catch (Exception ex) {
+                    log.warn("Failed to auto-record mistake: {}", ex.getMessage());
+                }
+            }
 
             List<String> options = new ArrayList<>();
             try {
