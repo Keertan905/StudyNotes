@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # StudyApp — AI-Powered Personalized Study Platform
 
 An intelligent, full-stack learning platform designed to turn syllabus topics into revision notes, generate diagnostic quizzes, detect knowledge gaps, and guide exam preparation.
@@ -82,3 +83,6 @@ npm run dev
 - [ ] **Phase 6: Exam Countdown Study Planner, Readiness Score, and Progress Dashboard**
 - [ ] **Phase 7: Document-Grounded Question Answering (RAG/Doc Q&A), Citations, and Document Management**
 - [ ] **Phase 8: Notifications, Accessibility, Security Review, Testing, and Documentation**
+=======
+# StudyNotes
+>>>>>>> b2936402df179311ab855df92be694329b74ade3
