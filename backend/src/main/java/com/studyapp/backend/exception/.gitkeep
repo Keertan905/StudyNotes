@@ -1,0 +1,2 @@
+package com.studyapp.backend.exception;
+// Exception — custom exceptions and global error handler

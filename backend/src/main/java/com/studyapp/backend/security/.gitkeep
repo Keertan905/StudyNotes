@@ -1,0 +1,2 @@
+package com.studyapp.backend.security;
+// Security — JWT filter, UserDetails, Spring Security config

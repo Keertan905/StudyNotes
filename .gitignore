@@ -1,0 +1,65 @@
+# ===================================================
+# StudyApp - Root Git Ignore Configuration
+# ===================================================
+
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build Artifacts
+target/
+*/target/
+dist/
+*/dist/
+dist-ssr/
+*/dist-ssr/
+build/
+*/build/
+out/
+*/out/
+*.class
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment and Secrets
+.env
+.env.local
+.env.*.local
+*.local
+
+# File Uploads and Runtime Storage
+uploads/
+*/uploads/
+temp/
+tmp/
+
+# IDE & Editor Specific Files
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/*
+!.vscode/extensions.json
+.settings/
+.classpath
+.project
+.factorypath
+.apt_generated
+.springBeans
+.sts4-cache
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Maven Wrapper binaries (wrapper scripts mvnw/mvnw.cmd are tracked)
+.mvn/wrapper/maven-wrapper.jar

@@ -1,0 +1,2 @@
+package com.studyapp.backend.ai;
+// AI — provider interface, implementations, and prompt builders

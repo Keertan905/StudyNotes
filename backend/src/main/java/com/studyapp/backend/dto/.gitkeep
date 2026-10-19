@@ -1,0 +1,2 @@
+package com.studyapp.backend.dto;
+// DTOs — Data Transfer Objects for request/response payloads
