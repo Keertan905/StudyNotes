@@ -30,9 +30,32 @@ public class TutorDto {
         private String message;
         private String explanationStyle; // concise, detailed, exam-oriented
         private String academicLevel;
+        private String language; // "English", "Hindi", "Hinglish", "Spanish", "French", "German"
         private List<Long> documentIds;
         @Builder.Default
         private Boolean useDocumentGrounding = true;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class TranslateRequest {
+        @NotBlank(message = "Text is required")
+        private String text;
+        @NotBlank(message = "Target language is required")
+        private String targetLanguage; // "Hindi", "Hinglish", "Spanish", "French", "German", "English"
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class TranslateResponse {
+        private String translatedText;
+        private String targetLanguage;
     }
 
     @Getter

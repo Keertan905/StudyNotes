@@ -14,7 +14,13 @@ import {
   Sparkles, 
   X, 
   ShieldCheck, 
-  Quote 
+  Quote,
+  Mic,
+  Volume2,
+  VolumeX,
+  Radio,
+  Languages,
+  Globe
 } from "lucide-react";
 import { 
   tutorService, 
@@ -75,6 +81,149 @@ export default function TutorPage() {
   const [isSending, setIsSending] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Multilingual Learning States
+  const [targetLanguage, setTargetLanguage] = useState<string>("English");
+  const [translatingMsgId, setTranslatingMsgId] = useState<number | null>(null);
+  const [messageTranslations, setMessageTranslations] = useState<Record<number, Record<string, string>>>({});
+  const [messageActiveLang, setMessageActiveLang] = useState<Record<number, string>>({});
+
+  const SUPPORTED_LANGUAGES = [
+    { code: "English", label: "English", flag: "🇺🇸", speechLang: "en-US" },
+    { code: "Hindi", label: "हिंदी (Hindi)", flag: "🇮🇳", speechLang: "hi-IN" },
+    { code: "Hinglish", label: "Hinglish", flag: "🇮🇳", speechLang: "en-IN" },
+    { code: "Spanish", label: "Español", flag: "🇪🇸", speechLang: "es-ES" },
+    { code: "French", label: "Français", flag: "🇫🇷", speechLang: "fr-FR" },
+    { code: "German", label: "Deutsch", flag: "🇩🇪", speechLang: "de-DE" },
+  ];
+
+  // Voice Interaction States (Web Speech Recognition & Synthesis)
+  const [isListening, setIsListening] = useState(false);
+  const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
+  const [speechRate, setSpeechRate] = useState<number>(1.0);
+  const [autoSpeak, setAutoSpeak] = useState<boolean>(false);
+  const recognitionRef = useRef<any>(null);
+
+  const handleSwitchMessageLanguage = async (msgId: number, originalContent: string, langCode: string) => {
+    if (langCode === "English") {
+      setMessageActiveLang(prev => ({ ...prev, [msgId]: "English" }));
+      return;
+    }
+
+    if (messageTranslations[msgId] && messageTranslations[msgId][langCode]) {
+      setMessageActiveLang(prev => ({ ...prev, [msgId]: langCode }));
+      toast.success(`Switched answer to ${langCode}`);
+      return;
+    }
+
+    try {
+      setTranslatingMsgId(msgId);
+      const res = await tutorService.translate(originalContent, langCode);
+      setMessageTranslations(prev => ({
+        ...prev,
+        [msgId]: {
+          ...(prev[msgId] || { "English": originalContent }),
+          [langCode]: res.translatedText
+        }
+      }));
+      setMessageActiveLang(prev => ({ ...prev, [msgId]: langCode }));
+      toast.success(`Explanation translated to ${langCode}!`);
+    } catch {
+      toast.error(`Could not translate into ${langCode}`);
+    } finally {
+      setTranslatingMsgId(null);
+    }
+  };
+
+  const cleanTextForSpeech = (raw: string) => {
+    return raw
+      .replace(/\[\d+\]/g, '') // remove citation badges like [1]
+      .replace(/[#*_`~>-]/g, ' ') // remove markdown syntax
+      .replace(/```[\s\S]*?```/g, 'Code block omitted for audio.')
+      .replace(/\n+/g, '. ')
+      .trim();
+  };
+
+  const toggleSpeak = (msgId: number, text: string) => {
+    if (!('speechSynthesis' in window)) {
+      toast.error("Text-to-speech audio is not supported in this browser.");
+      return;
+    }
+
+    if (speakingMsgId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMsgId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const cleaned = cleanTextForSpeech(text);
+    const utterance = new SpeechSynthesisUtterance(cleaned);
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+
+    const activeLangCode = messageActiveLang[msgId] || targetLanguage || "English";
+    const foundLang = SUPPORTED_LANGUAGES.find(l => l.code === activeLangCode);
+    if (foundLang) {
+      utterance.lang = foundLang.speechLang;
+    }
+
+    utterance.onend = () => setSpeakingMsgId(null);
+    utterance.onerror = () => setSpeakingMsgId(null);
+
+    setSpeakingMsgId(msgId);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const toggleListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Speech Recognition is not supported by your browser. Please use Chrome, Edge, or Safari.");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = true;
+      recognition.continuous = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast("🎙️ Listening... Speak your question now", { icon: "🗣️" });
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join("");
+        setInputMessage(transcript);
+      };
+
+      recognition.onerror = (err: any) => {
+        setIsListening(false);
+        if (err.error !== 'no-speech') {
+          toast.error(`Microphone error: ${err.error}`);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setIsListening(false);
+      toast.error("Microphone access was denied or unavailable.");
+    }
+  };
 
   useEffect(() => {
     loadInitialData();
@@ -180,6 +329,7 @@ export default function TutorPage() {
         message: text.trim(),
         explanationStyle,
         academicLevel,
+        language: targetLanguage,
         documentIds: selectedDocumentIds.length > 0 ? selectedDocumentIds : undefined,
         useDocumentGrounding,
       });
@@ -196,6 +346,10 @@ export default function TutorPage() {
 
       if (res.isDocumentGrounded && res.citations && res.citations.length > 0) {
         toast.success(`Answer grounded in ${res.citations.length} document source(s)! 📚`);
+      }
+
+      if (autoSpeak && res.assistantMessage && res.assistantMessage.content) {
+        toggleSpeak(res.assistantMessage.id, res.assistantMessage.content);
       }
     } catch {
       toast.error("Failed to send message. Check AI configuration.");
@@ -396,6 +550,57 @@ export default function TutorPage() {
             <option value="Rigorous & Mathematical">Rigorous & Mathematical</option>
           </select>
 
+          {/* Multilingual Selector */}
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs">
+            <Globe className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+            <select
+              value={targetLanguage}
+              onChange={(e) => {
+                setTargetLanguage(e.target.value);
+                toast.success(`Tutor language set to ${e.target.value}`);
+              }}
+              className="bg-transparent text-xs text-slate-700 font-medium outline-none cursor-pointer"
+              title="Select language for AI tutor answers"
+            >
+              {SUPPORTED_LANGUAGES.map(lang => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.flag} {lang.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Voice Output Options */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => {
+                const next = !autoSpeak;
+                setAutoSpeak(next);
+                toast(next ? "🔊 Auto-Speak Answers: ON" : "🔇 Auto-Speak Answers: OFF");
+              }}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+                autoSpeak ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+              title="Toggle automatic voice read-out for tutor explanations"
+            >
+              {autoSpeak ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+              <span>Auto-Voice</span>
+            </button>
+
+            <select
+              value={speechRate}
+              onChange={(e) => setSpeechRate(Number(e.target.value))}
+              className="text-[11px] bg-transparent text-slate-600 font-semibold px-1 focus:outline-none cursor-pointer"
+              title="Voice playback speed"
+            >
+              <option value={0.8}>0.8x</option>
+              <option value={1.0}>1.0x</option>
+              <option value={1.25}>1.25x</option>
+              <option value={1.5}>1.5x</option>
+            </select>
+          </div>
+
           <button
             onClick={handleStartNewChat}
             className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-xs transition-colors"
@@ -562,7 +767,87 @@ export default function TutorPage() {
                           </div>
                         )}
 
-                        {renderMessageContent(msg.content, msg.citations)}
+                        {(() => {
+                          const activeText = (!isUser && messageTranslations[msg.id] && messageActiveLang[msg.id] && messageTranslations[msg.id][messageActiveLang[msg.id]]) 
+                            ? messageTranslations[msg.id][messageActiveLang[msg.id]] 
+                            : msg.content;
+
+                          return (
+                            <>
+                              {renderMessageContent(activeText, msg.citations)}
+
+                              {/* Multilingual Switcher Bar */}
+                              {!isUser && (
+                                <div className="mt-2.5 pt-2 border-t border-slate-200/50 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                      <Languages className="w-3 h-3 text-indigo-500" />
+                                      Translate:
+                                    </span>
+                                    {SUPPORTED_LANGUAGES.map((lang) => {
+                                      const currentMsgLang = messageActiveLang[msg.id] || targetLanguage || "English";
+                                      const isActive = currentMsgLang === lang.code;
+                                      const isTranslatingThis = translatingMsgId === msg.id;
+
+                                      return (
+                                        <button
+                                          key={lang.code}
+                                          type="button"
+                                          onClick={() => handleSwitchMessageLanguage(msg.id, msg.content, lang.code)}
+                                          disabled={isTranslatingThis}
+                                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${
+                                            isActive
+                                              ? "bg-indigo-600 text-white shadow-xs"
+                                              : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                                          }`}
+                                          title={`Translate this answer to ${lang.label}`}
+                                        >
+                                          <span>{lang.flag}</span>
+                                          <span>{lang.code}</span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Audio Voice Player for Assistant Message */}
+                              {!isUser && (
+                                <div className="mt-2 pt-2 border-t border-slate-200/40 flex items-center justify-between text-xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleSpeak(msg.id, activeText)}
+                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all ${
+                                      speakingMsgId === msg.id
+                                        ? "bg-rose-50 text-rose-600 border border-rose-200 animate-pulse"
+                                        : "bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/60"
+                                    }`}
+                                  >
+                                    {speakingMsgId === msg.id ? (
+                                      <>
+                                        <Radio className="w-3.5 h-3.5 text-rose-500 animate-spin" />
+                                        <span>Speaking... (Click to Stop)</span>
+                                        <span className="flex gap-0.5 items-end h-3 ml-1">
+                                          <span className="w-0.5 h-2 bg-rose-500 animate-bounce" />
+                                          <span className="w-0.5 h-3 bg-rose-500 animate-bounce delay-75" />
+                                          <span className="w-0.5 h-1.5 bg-rose-500 animate-bounce delay-150" />
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Volume2 className="w-3.5 h-3.5 text-indigo-600" />
+                                        <span>Listen to Explanation</span>
+                                      </>
+                                    )}
+                                  </button>
+                                  <span className="text-[10px] text-slate-400">
+                                    {speakingMsgId === msg.id ? `${speechRate}x speed` : "Voice Audio"}
+                                  </span>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
 
                       {/* Sources & Citations Footer for Assistant */}
@@ -653,6 +938,29 @@ export default function TutorPage() {
             </div>
           )}
 
+          {/* Real-time Listening Waveform Banner */}
+          {isListening && (
+            <div className="px-4 py-2 bg-rose-50 border-t border-rose-100 flex items-center justify-between text-xs text-rose-700 animate-pulse">
+              <div className="flex items-center gap-2 font-medium">
+                <Radio className="w-4 h-4 text-rose-600 animate-spin" />
+                <span>Microphone Active — Speak your question clearly...</span>
+                <span className="flex gap-1 items-end h-4 ml-1">
+                  <span className="w-1 h-2 bg-rose-600 animate-bounce" />
+                  <span className="w-1 h-4 bg-rose-600 animate-bounce delay-75" />
+                  <span className="w-1 h-3 bg-rose-600 animate-bounce delay-150" />
+                  <span className="w-1 h-4 bg-rose-600 animate-bounce delay-100" />
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={toggleListening}
+                className="px-2 py-0.5 rounded-md bg-rose-200/80 hover:bg-rose-300 text-rose-900 font-semibold text-[11px]"
+              >
+                Done Speaking
+              </button>
+            </div>
+          )}
+
           {/* Bottom Chat Input Form */}
           <div className="p-4 border-t border-slate-200 bg-white">
             <form
@@ -671,11 +979,28 @@ export default function TutorPage() {
                 <BookOpen className="w-4 h-4" />
               </button>
 
+              <button
+                type="button"
+                onClick={toggleListening}
+                className={`p-2.5 rounded-2xl border transition-all flex items-center justify-center ${
+                  isListening
+                    ? "bg-rose-500 border-rose-600 text-white shadow-lg shadow-rose-500/30 animate-pulse scale-105"
+                    : "border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-indigo-600"
+                }`}
+                title={isListening ? "Listening... Click to stop" : "Speak question with Microphone"}
+              >
+                {isListening ? (
+                  <Radio className="w-4 h-4 text-white animate-spin" />
+                ) : (
+                  <Mic className="w-4 h-4" />
+                )}
+              </button>
+
               <input
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Ask any question grounded in your documents..."
+                placeholder={isListening ? "Listening to your voice..." : "Ask any question or speak with microphone..."}
                 disabled={isSending}
                 className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-slate-800"
               />

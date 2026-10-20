@@ -66,11 +66,20 @@ export const tutorService = {
       message: string;
       explanationStyle?: string;
       academicLevel?: string;
+      language?: string;
       documentIds?: number[];
       useDocumentGrounding?: boolean;
     }
   ): Promise<ChatResponse> {
     const res = await api.post<ChatResponse>(`/tutor/conversations/${conversationId}/messages`, data);
+    return res.data;
+  },
+
+  async translate(text: string, targetLanguage: string): Promise<{ translatedText: string; targetLanguage: string }> {
+    const res = await api.post<{ translatedText: string; targetLanguage: string }>('/tutor/translate', {
+      text,
+      targetLanguage
+    });
     return res.data;
   },
 

@@ -26,7 +26,10 @@ import {
   Flame,
   PanelLeftClose,
   PanelLeftOpen,
-  Video
+  Video,
+  Network,
+  Code2,
+  Camera
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { notificationService } from "../../services/notification.service";
@@ -37,6 +40,10 @@ const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/subjects", label: "My Subjects", icon: GraduationCap },
   { to: "/notes", label: "AI Notes", icon: FileText },
+  { to: "/mindmap", label: "AI Mind Maps", icon: Network },
+  { to: "/lecture-summarizer", label: "Lecture Summarizer", icon: BookOpen },
+  { to: "/code-explainer", label: "Code Explainer", icon: Code2 },
+  { to: "/image-qa", label: "Image Q&A Solver", icon: Camera },
   { to: "/tutor", label: "AI Tutor", icon: Bot },
   { to: "/youtube-finder", label: "Video Learning", icon: Video },
   { to: "/quiz", label: "Quiz & Exams", icon: HelpCircle },

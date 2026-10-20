@@ -67,4 +67,12 @@ public class TutorController {
         tutorService.deleteConversation(id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/translate")
+    @Operation(summary = "Translate and re-explain concept in a target language (Hindi, Hinglish, Spanish, etc.)")
+    public ResponseEntity<TutorDto.TranslateResponse> translateExplanation(
+            @Valid @RequestBody TutorDto.TranslateRequest request
+    ) {
+        return ResponseEntity.ok(tutorService.translateExplanation(request));
+    }
 }

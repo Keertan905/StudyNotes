@@ -118,6 +118,9 @@ public class TutorService {
         systemPromptBuilder.append("Context: ").append(subjectContext).append(".\n");
         systemPromptBuilder.append("Student level: ").append(request.getAcademicLevel() != null ? request.getAcademicLevel() : "College Undergrad").append(".\n");
         systemPromptBuilder.append("Response style: ").append(request.getExplanationStyle() != null ? request.getExplanationStyle() : "Exam-Oriented & Step-by-Step with Intuitive Analogies").append(".\n");
+        if (request.getLanguage() != null && !request.getLanguage().isBlank() && !request.getLanguage().equalsIgnoreCase("English")) {
+            systemPromptBuilder.append("Target Language: ").append(request.getLanguage()).append(". Explain concepts clearly and fluently in ").append(request.getLanguage()).append(" while keeping standard technical terms in clear English so students can easily follow and score in exams.\n");
+        }
 
         if (isGrounded) {
             systemPromptBuilder.append("\n=== CRITICAL INSTRUCTIONS FOR GROUNDED QUESTION ANSWERING ===\n");
@@ -240,6 +243,28 @@ public class TutorService {
                 .groundingConfidence(message.getGroundingConfidence())
                 .isDocumentGrounded(Boolean.TRUE.equals(message.getIsDocumentGrounded()))
                 .createdAt(message.getCreatedAt())
+                .build();
+    }
+
+    public TutorDto.TranslateResponse translateExplanation(TutorDto.TranslateRequest request) {
+        String lang = request.getTargetLanguage().trim();
+        String text = request.getText().trim();
+
+        String systemPrompt = "You are an expert bilingual university professor and academic translator. " +
+                "Translate and re-explain the provided academic study answer into " + lang + ". " +
+                "If translating into Hindi or Hinglish, keep technical engineering terms (e.g. CPU, Cache, Normalization, Semaphore, Invariant, Derivative) in standard English/phonetics so it sounds natural, academic, and exam-appropriate. " +
+                "Preserve all equations, citation markers [1], [2], bullet formatting, and structure exactly.";
+
+        String userPrompt = "Translate the following explanation into " + lang + ":\n\n" + text;
+
+        String translated = aiProvider.generate(systemPrompt, userPrompt);
+        if (translated == null || translated.isBlank()) {
+            translated = "[Translated to " + lang + "]: " + text;
+        }
+
+        return TutorDto.TranslateResponse.builder()
+                .translatedText(translated.trim())
+                .targetLanguage(lang)
                 .build();
     }
 }
