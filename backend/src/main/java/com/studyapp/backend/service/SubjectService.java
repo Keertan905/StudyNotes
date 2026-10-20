@@ -182,13 +182,14 @@ public class SubjectService {
         String content = "";
         if (file != null && !file.isEmpty()) {
             try {
-                if (Objects.requireNonNull(file.getOriginalFilename()).toLowerCase().endsWith(".pdf")) {
+                String safeName = com.studyapp.backend.util.FileUploadSecurityUtil.validateAndSanitizeFile(file);
+                if (safeName.toLowerCase().endsWith(".pdf")) {
                     try (PDDocument document = Loader.loadPDF(file.getBytes())) {
                         PDFTextStripper stripper = new PDFTextStripper();
                         content = stripper.getText(document);
                     }
                 } else {
-                    content = new String(file.getBytes());
+                    content = new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
                 }
             } catch (IOException e) {
                 log.error("Failed to read syllabus file: {}", e.getMessage());
@@ -197,7 +198,7 @@ public class SubjectService {
         }
 
         if (content.isBlank() && textInput != null) {
-            content = textInput;
+            content = com.studyapp.backend.util.FileUploadSecurityUtil.sanitizeTextContent(textInput);
         }
 
         return parseSyllabusStructure(content);

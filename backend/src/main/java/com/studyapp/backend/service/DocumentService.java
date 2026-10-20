@@ -48,15 +48,11 @@ public class DocumentService {
     public DocumentDto.Response uploadFile(String userEmail, MultipartFile file, Long subjectId, String customTitle) {
         User user = getUserByEmail(userEmail);
 
-        if (file.isEmpty()) {
-            throw new BadRequestException("Uploaded file is empty");
-        }
-
-        String originalFilename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "document.txt";
-        String fileType = determineFileType(originalFilename);
+        String safeFilename = com.studyapp.backend.util.FileUploadSecurityUtil.validateAndSanitizeFile(file);
+        String fileType = determineFileType(safeFilename);
         String title = (customTitle != null && !customTitle.isBlank())
                 ? customTitle.trim()
-                : stripExtension(originalFilename);
+                : stripExtension(safeFilename);
 
         Subject subject = null;
         if (subjectId != null) {
@@ -86,7 +82,7 @@ public class DocumentService {
                 extractedPages.add(new ExtractedPage(1, text));
             }
         } catch (IOException e) {
-            log.error("Failed to parse document {}: {}", originalFilename, e.getMessage());
+            log.error("Failed to parse document {}: {}", safeFilename, e.getMessage());
             throw new BadRequestException("Failed to read and parse uploaded file: " + e.getMessage());
         }
 
@@ -104,7 +100,7 @@ public class DocumentService {
                 .user(user)
                 .subject(subject)
                 .title(title)
-                .fileName(originalFilename)
+                .fileName(safeFilename)
                 .fileType(fileType)
                 .fileSize(file.getSize())
                 .pageCount(pageCount)
@@ -134,16 +130,21 @@ public class DocumentService {
             throw new BadRequestException("Document text content is required");
         }
 
+        String sanitizedContent = com.studyapp.backend.util.FileUploadSecurityUtil.sanitizeTextContent(request.getContent());
+
         Subject subject = null;
         if (request.getSubjectId() != null) {
             subject = subjectRepository.findByIdAndUserId(request.getSubjectId(), user.getId()).orElse(null);
         }
 
-        String fileName = (request.getFileName() != null && !request.getFileName().isBlank())
+        String rawName = (request.getFileName() != null && !request.getFileName().isBlank())
                 ? request.getFileName()
-                : request.getTitle().replaceAll("[^a-zA-Z0-9_-]", "_") + ".txt";
+                : request.getTitle();
+        String safeBase = rawName.replaceAll("[^a-zA-Z0-9_-]", "_");
+        if (safeBase.isBlank()) safeBase = "syllabus_notes";
+        String fileName = safeBase.endsWith(".txt") ? safeBase : safeBase + ".txt";
 
-        List<ExtractedPage> extractedPages = List.of(new ExtractedPage(1, request.getContent().trim()));
+        List<ExtractedPage> extractedPages = List.of(new ExtractedPage(1, sanitizedContent));
         List<DocumentChunk> chunks = chunkPages(extractedPages);
         String summary = generateAiSummary(request.getTitle(), chunks);
 

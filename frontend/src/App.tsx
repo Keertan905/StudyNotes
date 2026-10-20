@@ -32,6 +32,7 @@ import MindMapPage from './pages/app/MindMapPage';
 import LectureSummarizerPage from './pages/app/LectureSummarizerPage';
 import CodeExplainerPage from './pages/app/CodeExplainerPage';
 import ImageQaPage from './pages/app/ImageQaPage';
+import AdminDashboardPage from './pages/app/AdminDashboardPage';
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -44,6 +45,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+};
+
+// Admin-only route guard
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role !== 'ADMIN') return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
@@ -96,6 +112,7 @@ function AppRoutes() {
         <Route path="/lecture-summarizer" element={<LectureSummarizerPage />} />
         <Route path="/code-explainer" element={<CodeExplainerPage />} />
         <Route path="/image-qa" element={<ImageQaPage />} />
+        <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
       </Route>
 
       {/* 404 Fallback */}

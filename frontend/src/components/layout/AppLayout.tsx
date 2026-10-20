@@ -29,7 +29,8 @@ import {
   Video,
   Network,
   Code2,
-  Camera
+  Camera,
+  Shield
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { notificationService } from "../../services/notification.service";
@@ -61,6 +62,11 @@ export default function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const currentNavItems = [
+    ...navItems,
+    ...(user?.role === "ADMIN" ? [{ to: "/admin", label: "Admin Portal", icon: Shield }] : [])
+  ];
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -188,7 +194,7 @@ export default function AppLayout() {
 
         {/* Navigation list */}
         <nav className="flex-1 overflow-y-auto px-2.5 py-4 space-y-1">
-          {navItems.map((item) => {
+          {currentNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
