@@ -16,9 +16,10 @@ import {
   AlertCircle, 
   Share2, 
   Bot,
-  RotateCcw
+  RotateCcw,
+  WifiOff
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { youtubeService } from "../../services/youtube.service";
 import type { YouTubeVideoItem, YouTubeSearchParams } from "../../services/youtube.service";
 import { subjectService } from "../../services/subject.service";
@@ -219,6 +220,19 @@ export default function YouTubeFinderPage() {
           </button>
         </div>
       </div>
+
+      {/* Offline Mode Alert */}
+      {typeof navigator !== "undefined" && !navigator.onLine && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between text-xs text-amber-900">
+          <div className="flex items-center gap-2">
+            <WifiOff className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <span>YouTube Video Search & streaming requires an active internet connection. Access downloaded notes and flashcards in your Offline Library.</span>
+          </div>
+          <Link to="/offline" className="font-bold underline text-amber-950 flex-shrink-0">
+            Go to Offline Library
+          </Link>
+        </div>
+      )}
 
       {/* Setup Guide Banner (Shown when unconfigured or toggled) */}
       {showSetupGuide && (

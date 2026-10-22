@@ -11,9 +11,11 @@ import {
   BookOpen, 
   Loader2, 
   Search,
+  Download
 } from "lucide-react";
 import { noteService, type NoteItem } from "../../services/note.service";
 import { subjectService, type SubjectItem } from "../../services/subject.service";
+import { offlineService } from "../../services/offline.service";
 import toast from "react-hot-toast";
 
 export default function NotesPage() {
@@ -390,6 +392,24 @@ export default function NotesPage() {
                     <Printer className="w-4 h-4" />
                     <span className="hidden sm:inline">Print / PDF</span>
                   </button>
+
+                  {selectedNote && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await offlineService.downloadNote(selectedNote.id);
+                          toast.success("Note saved to Offline Library! 📥");
+                        } catch {
+                          toast.error("Failed to save note for offline study");
+                        }
+                      }}
+                      className="p-2 rounded-xl text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors text-xs font-semibold flex items-center gap-1.5"
+                      title="Save to Offline Library"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span className="hidden sm:inline">Save Offline</span>
+                    </button>
+                  )}
 
                   {!selectedNote && (
                     <button

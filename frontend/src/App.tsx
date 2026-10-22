@@ -32,7 +32,12 @@ import MindMapPage from './pages/app/MindMapPage';
 import LectureSummarizerPage from './pages/app/LectureSummarizerPage';
 import CodeExplainerPage from './pages/app/CodeExplainerPage';
 import ImageQaPage from './pages/app/ImageQaPage';
+import OfflineLibraryPage from './pages/app/OfflineLibraryPage';
+import RewardsPage from './pages/app/RewardsPage';
 import AdminDashboardPage from './pages/app/AdminDashboardPage';
+import DiagramMakerPage from './pages/app/DiagramMakerPage';
+import VirtualLabPage from './pages/app/VirtualLabPage';
+import ProblemSolverPage from './pages/app/ProblemSolverPage';
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -112,6 +117,11 @@ function AppRoutes() {
         <Route path="/lecture-summarizer" element={<LectureSummarizerPage />} />
         <Route path="/code-explainer" element={<CodeExplainerPage />} />
         <Route path="/image-qa" element={<ImageQaPage />} />
+        <Route path="/diagrams" element={<DiagramMakerPage />} />
+        <Route path="/virtual-lab" element={<VirtualLabPage />} />
+        <Route path="/problem-solver" element={<ProblemSolverPage />} />
+        <Route path="/offline" element={<OfflineLibraryPage />} />
+        <Route path="/rewards" element={<RewardsPage />} />
         <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
       </Route>
 

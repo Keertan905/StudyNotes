@@ -14,6 +14,7 @@ import {
   Loader2,
   ArrowRight,
   Lightbulb,
+  Download
 } from "lucide-react";
 import {
   flashcardService,
@@ -23,6 +24,7 @@ import {
   type ReviewRating,
 } from "../../services/flashcard.service";
 import { subjectService, type SubjectItem } from "../../services/subject.service";
+import { offlineService } from "../../services/offline.service";
 import toast from "react-hot-toast";
 
 type TabMode = "review" | "deck" | "generate";
@@ -301,7 +303,22 @@ export default function FlashcardsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+          <button
+            onClick={async () => {
+              try {
+                const count = await offlineService.downloadAllFlashcards();
+                toast.success(`Saved ${count} flashcards to Offline Library! 📥`);
+              } catch {
+                toast.error("Failed to download flashcards for offline study");
+              }
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-800 font-bold text-xs shadow-xs transition-colors"
+            title="Download full deck to browser IndexedDB for offline revision"
+          >
+            <Download className="w-4 h-4 text-teal-600" />
+            Save Deck Offline
+          </button>
           <button
             onClick={() => setShowManualModal(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-sm transition-colors"

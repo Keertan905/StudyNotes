@@ -13,13 +13,17 @@ import {
   Flame,
   TrendingUp,
   Target,
-  Circle
+  Circle,
+  Trophy,
+  HardDrive
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { analyticsService } from "../../services/analytics.service";
 import type { AnalyticsOverview } from "../../services/analytics.service";
 import { plannerService } from "../../services/planner.service";
 import type { DailyPlanResponse, ExamTarget } from "../../services/planner.service";
+import { gamificationService } from "../../services/gamification.service";
+import type { GamificationProfile } from "../../services/gamification.service";
 import toast from "react-hot-toast";
 
 export default function DashboardPage() {
@@ -29,6 +33,7 @@ export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
   const [dailyPlan, setDailyPlan] = useState<DailyPlanResponse | null>(null);
   const [exams, setExams] = useState<ExamTarget[]>([]);
+  const [gamification, setGamification] = useState<GamificationProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -38,14 +43,16 @@ export default function DashboardPage() {
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
-      const [analyticsData, planData, examsData] = await Promise.all([
+      const [analyticsData, planData, examsData, gamificationData] = await Promise.all([
         analyticsService.getOverview().catch(() => null),
         plannerService.getDailyPlan().catch(() => null),
         plannerService.getExams().catch(() => []),
+        gamificationService.getProfile().catch(() => null),
       ]);
       setAnalytics(analyticsData);
       setDailyPlan(planData);
       setExams(examsData);
+      setGamification(gamificationData);
     } catch {
       // Ignore background error
     } finally {
@@ -78,6 +85,20 @@ export default function DashboardPage() {
   const nearestExam = exams.find((e) => e.status === "UPCOMING");
 
   const quickActions = [
+    {
+      to: "/rewards",
+      title: "Gamification & Rewards",
+      desc: "Level progression, XP points, streaks, and campus leaderboard",
+      icon: Trophy,
+      color: "from-amber-500 to-yellow-600",
+    },
+    {
+      to: "/offline",
+      title: "Offline Study Library",
+      desc: "Cache notes, SM-2 flashcards, and documents for offline learning",
+      icon: HardDrive,
+      color: "from-teal-500 to-emerald-600",
+    },
     {
       to: "/planner",
       title: "Exam Study Planner",
@@ -192,6 +213,60 @@ export default function DashboardPage() {
         {/* Ambient glow */}
         <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
       </div>
+
+      {/* SECTION: ACADEMIC LEVEL & GAMIFICATION CARD */}
+      {gamification && (
+        <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-indigo-500/10 border border-amber-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-600 text-white flex items-center justify-center font-black text-2xl shadow-sm flex-shrink-0">
+              {gamification.currentLevel}
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-700">Level {gamification.currentLevel}</span>
+                <span className="text-slate-300">•</span>
+                <span className="text-xs font-bold text-slate-800">{gamification.levelTitle}</span>
+              </div>
+              <h3 className="text-xl font-black text-slate-900">
+                {gamification.totalXp} Total XP Earned
+              </h3>
+              <p className="text-xs text-slate-500">
+                {gamification.nextLevelTargetXp - gamification.totalXp} XP to Level {gamification.currentLevel + 1} • {gamification.achievementsCount} Achievements Unlocked
+              </p>
+            </div>
+          </div>
+
+          <div className="flex-1 max-w-md space-y-2">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
+              <span>Level Progress</span>
+              <span>{gamification.progressToNextLevelPct}%</span>
+            </div>
+            <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden p-0.5">
+              <div
+                className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
+                style={{ width: `${Math.max(4, gamification.progressToNextLevelPct)}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link
+              to="/rewards"
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              Rewards & Leaderboard
+            </Link>
+            <Link
+              to="/offline"
+              className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
+            >
+              <HardDrive className="w-3.5 h-3.5 text-teal-600" />
+              Offline Library
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* SECTION: LIVE READINESS & NEAREST EXAM COUNTDOWN */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

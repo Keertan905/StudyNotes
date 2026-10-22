@@ -31,6 +31,7 @@ public class QuizService {
     private final TopicRepository topicRepository;
     private final UserRepository userRepository;
     private final MistakeService mistakeService;
+    private final GamificationService gamificationService;
     private final AiProvider aiProvider;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -501,6 +502,12 @@ public class QuizService {
 
         quizAttemptRepository.save(attempt);
         log.info("Submitted attempt ID: {} for user {}. Score: {}/{} ({}%)", attemptId, user.getEmail(), totalScore, totalMaxMarks, percentage);
+
+        try {
+            gamificationService.awardQuizAttemptXp(user, attempt);
+        } catch (Exception ex) {
+            log.warn("Failed to award quiz attempt XP: {}", ex.getMessage());
+        }
 
         return QuizDto.AttemptDetailResponse.builder()
                 .attemptId(attempt.getId())

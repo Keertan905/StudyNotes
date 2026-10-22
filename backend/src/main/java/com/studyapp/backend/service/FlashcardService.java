@@ -29,6 +29,7 @@ public class FlashcardService {
     private final UnitRepository unitRepository;
     private final TopicRepository topicRepository;
     private final UserRepository userRepository;
+    private final GamificationService gamificationService;
     private final AiProvider aiProvider;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -337,6 +338,12 @@ public class FlashcardService {
 
         flashcardReviewRepository.save(review);
         log.info("Reviewed flashcard ID: {} with rating '{}'. Next review in {} days ({})", cardId, rating, newInterval, nextDate);
+
+        try {
+            gamificationService.awardFlashcardReviewXp(user, review, null);
+        } catch (Exception ex) {
+            log.warn("Failed to award flashcard review XP: {}", ex.getMessage());
+        }
 
         return mapToResponse(savedCard);
     }

@@ -11,7 +11,7 @@ studyapp/
 ├── backend/               # Spring Boot 4 + Java 17 + Spring Security 6 + JPA + MySQL
 │   ├── src/main/java/     # Application source (controllers, services, repositories, models, security, AI)
 │   ├── src/main/resources/# application.properties, database configuration
-│   ├── src/test/java/     # Automated unit & integration test suites (10/10 passing)
+│   ├── src/test/java/     # Automated unit & integration test suites (19/19 passing)
 │   └── pom.xml            # Maven dependencies (JPA, MySQL, JJWT, PDFBox, Lombok)
 │
 └── frontend/              # React 19 + TypeScript + Vite + Tailwind CSS
@@ -169,6 +169,58 @@ app.youtube.timeout-seconds=15
   - ✅ Speech synthesis configured with native multi-accent pronunciation (`hi-IN`, `en-US`, `es-ES`, etc.)
   - ✅ Smart technical vocabulary retention keeping formulas, code, and keywords clear while teaching in the student's preferred language
 
+- ✅ **Phase 16: Offline Study Mode**
+  - ✅ Browser-native IndexedDB client storage (`StudyApp_OfflineDB`) for caching student notes, SM-2 flashcard decks, and study document chunks
+  - ✅ Dedicated Offline Library Hub (`/offline`) with storage estimation meters (`navigator.storage.estimate`), cache purge controls, and item-level deletion
+  - ✅ Offline study capability allowing students to read revision notes, practice interactive flashcards with SM-2 intervals, and run Pomodoro focus timer sessions with zero internet connection
+  - ✅ Robust local sync queue (`syncQueue`) persisting study actions during offline sessions and automatically synchronizing when connectivity returns
+  - ✅ Idempotent backend synchronization API (`/api/offline/sync`, `/api/offline/manifest`) protecting against duplicate requests, session conflicts, and network aborts
+  - ✅ Network status detection (`useOfflineStatus` hook) providing real-time online/offline indicators, auto-sync triggers on reconnect, and token expiry guards
+  - ✅ Clear boundary indicators explaining online-only AI capabilities (Tutor, Lecture Summarizer, Image Q&A, YouTube Finder) with zero frontend secret caching
+  - ✅ Automated unit test suite (`OfflineSyncServiceTest`) verifying session sync, flashcard repetition updates, and duplicate avoidance
+
+- ✅ **Phase 17: Gamification & Rewards**
+  - ✅ Multi-tier XP points system awarding XP for focused study sessions (10 base + 1 XP/min), quiz completions (30 base + percentage score + 20 bonus for 100%), flashcard reviews (5 XP/card with daily anti-spam cap), and offline study syncs
+  - ✅ Mathematical level progression curve spanning Levels 1 to 10 ("Novice Scholar" to "Grand Polymath") with real-time level progress bars and XP thresholds
+  - ✅ Automated achievement & badge unlock engine (`FIRST_STEP`, `POMODORO_PRO`, `CENTURION`, `FLASH_MASTER`, `QUIZ_WHIZ`, `PERFECT_SCORE`, `STREAK_3`, `STREAK_7`, `OFFLINE_SCHOLAR`, `KNOWLEDGE_HUNTER`) with gold/frosted visual showcases
+  - ✅ Persistent daily streak tracker calculating active days, gap resets, and longest historical streaks
+  - ✅ Visual 60-day study consistency activity heatmap (GitHub-style calendar grid) with interactive day inspection tooltips and intensity ratings
+  - ✅ Campus Leaderboard (`/rewards`) ranking top 50 scholars by total XP with student privacy controls (opt-in/opt-out toggle to mask or hide student names)
+  - ✅ Audited transaction ledger (`XpTransaction`) preventing client-side reward manipulation, duplicate submissions, and repeated-request abuse
+  - ✅ Interactive Dashboard widgets and live top-navigation header pill displaying total XP, level, and streak status
+- ✅ **Phase 18: AI Diagram & Infographic Maker**
+  - ✅ Vector-based structured diagram generation: Flowcharts, Concept Maps, System Architectures, and Revision Infographics without static bitmap image dependencies
+  - ✅ Interactive SVG canvas with infinite pan, zoom ($30\% - 250\%$), reset view, node inspection drawer with exam tips, and live formula highlights
+  - ✅ Multi-format export engine supporting vector SVG download, high-resolution PNG rasterization via canvas, and JSON graph payloads
+  - ✅ MySQL persistence with dedicated `Diagram` JPA entity, repository, and slide-out Saved Diagrams Library drawer
+  - ✅ Resilient educational fallback templates delivering rich diagrams even in offline or unconfigured AI states
+  - ✅ Automated unit test suite (`DiagramServiceTest`) verifying schema parsing, geometry normalizations, and persistence
+
+- ✅ **Phase 19: Interactive Virtual Lab & Simulations**
+  - ✅ Four real, algorithmic, non-static simulations spanning Computer Science, Networking, Electronics, and Physics:
+    - **CPU Scheduling Simulator**: FCFS, Round Robin (custom quantum), Shortest Job First, Priority with dynamic Gantt charts, process editing, and calculated Waiting/Turnaround time metrics
+    - **Network Packet Routing Simulator**: Interactive mesh topology with Dijkstra shortest-path computation, dynamic link severing/failover, animated packet hops, and hop latency logging
+    - **Digital Logic Gate Simulator**: Combinational breadboard with AND, OR, NOT, NAND, NOR, XOR gates, input toggle switches, glowing LED indicators, and live truth table auto-verifier
+    - **Ohm's Law & Circuit Behavior Simulator**: DC voltage and resistance sliders, real-time current calculation ($I = V / R$), electron drift speed animation, power dissipation ($P = V \times I$), and resistor thermal overload safety limits
+  - ✅ Structured experiment guides, theory breakdowns, mathematical formulas, and step-by-step experiment instructions
+  - ✅ Post-experiment diagnostic assessments with instant verification and direct integration with `GamificationService` (+XP rewards)
+  - ✅ Automated unit test suite (`VirtualLabServiceTest`) verifying experiment catalogs, scoring algorithms, and gamification reward triggers
+
+- ✅ **Phase 20: Step-by-Step Problem Solver**
+  - ✅ Multi-domain technical problem solver supporting Mathematics, Java/OOP, Data Structures & Algorithms, Computer Networks, and Operating Systems
+  - ✅ Progressive step breakdown with formula/code notation, pedagogical "What is done", and critical "Why this step was taken" rationale
+  - ✅ Multi-level explanations: formal derivation steps, intuitive "Explain Like I'm 5" real-world analogies, and common exam pitfalls & traps
+  - ✅ Interactive follow-up Q&A engine allowing students to clarify specific intermediate steps or ask boundary questions
+  - ✅ Sandbox safety: strictly static code and algorithmic analysis without executing arbitrary code on the main backend
+  - ✅ Document grounding (RAG) using `RagService` to optionally ground solutions in student uploaded syllabus materials with citation badges
+  - ✅ Automated unit test suite (`ProblemSolverServiceTest`) verifying multi-step parsing, educational fallbacks, and follow-up endpoints
+
+- ✅ **Phase 21: Enhanced Voice AI Tutor**
+  - ✅ Web Speech API Speech-to-Text with dedicated listening indicator, animated audio waveform visualizer, and on-demand microphone permission requests
+  - ✅ Real-time Voice Question Review drawer: allows students to view the live spoken transcript, edit the text before sending, and submit directly to the AI Tutor
+  - ✅ Text-to-Speech synthesis with granular audio playback controls: **Play**, **Pause**, **Resume**, and **Stop** buttons on individual messages and sticky global player bar
+  - ✅ Playback speed controls ($0.8\times, 1.0\times, 1.25\times$) and automatic multi-accent matching for translated explanations
+  - ✅ Graceful non-blocking text-only fallback with informative banner guidance when microphone access is denied or unsupported
 
 
 

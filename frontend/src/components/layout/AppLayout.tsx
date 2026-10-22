@@ -30,18 +30,33 @@ import {
   Network,
   Code2,
   Camera,
-  Shield
+  Shield,
+  Trophy,
+  HardDrive,
+  WifiOff,
+  Zap,
+  Workflow,
+  FlaskConical,
+  Lightbulb
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { notificationService } from "../../services/notification.service";
 import type { StudentNotification } from "../../services/notification.service";
+import { useOfflineStatus } from "../../hooks/useOfflineStatus";
+import { gamificationService } from "../../services/gamification.service";
+import type { GamificationProfile } from "../../services/gamification.service";
 import toast from "react-hot-toast";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/rewards", label: "Rewards & Streaks", icon: Trophy },
+  { to: "/offline", label: "Offline Library", icon: HardDrive },
   { to: "/subjects", label: "My Subjects", icon: GraduationCap },
   { to: "/notes", label: "AI Notes", icon: FileText },
   { to: "/mindmap", label: "AI Mind Maps", icon: Network },
+  { to: "/diagrams", label: "Diagram & Infographics", icon: Workflow },
+  { to: "/virtual-lab", label: "Virtual Lab", icon: FlaskConical },
+  { to: "/problem-solver", label: "Problem Solver", icon: Lightbulb },
   { to: "/lecture-summarizer", label: "Lecture Summarizer", icon: BookOpen },
   { to: "/code-explainer", label: "Code Explainer", icon: Code2 },
   { to: "/image-qa", label: "Image Q&A Solver", icon: Camera },
@@ -83,12 +98,24 @@ export default function AppLayout() {
     });
   };
 
+  const { isOnline, pendingCount } = useOfflineStatus();
+  const [rewardProfile, setRewardProfile] = useState<GamificationProfile | null>(null);
   const [notifications, setNotifications] = useState<StudentNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     loadNotifications();
+    loadGamificationProfile();
   }, []);
+
+  const loadGamificationProfile = async () => {
+    try {
+      const data = await gamificationService.getProfile();
+      setRewardProfile(data);
+    } catch {
+      // offline or silent fail
+    }
+  };
 
   const loadNotifications = async () => {
     try {
@@ -297,7 +324,60 @@ export default function AppLayout() {
           </div>
 
           {/* Top Right Actions */}
-          <div className="flex items-center gap-3 relative">
+          <div className="flex items-center gap-2.5 sm:gap-3 relative">
+            {/* Gamification Level & XP Pill */}
+            {rewardProfile && (
+              <Link
+                to="/rewards"
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 hover:border-amber-300 text-xs font-bold text-amber-900 transition-all shadow-xs"
+                title="Academic Level, XP & Badges"
+              >
+                <span className="flex items-center gap-1 text-amber-700">
+                  <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                  {rewardProfile.totalXp} XP
+                </span>
+                <span className="text-slate-300">•</span>
+                <span className="text-slate-700">Lvl {rewardProfile.currentLevel}</span>
+                {rewardProfile.currentStreak > 0 && (
+                  <>
+                    <span className="text-slate-300">•</span>
+                    <span className="flex items-center gap-0.5 text-orange-600">
+                      <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
+                      {rewardProfile.currentStreak}d
+                    </span>
+                  </>
+                )}
+              </Link>
+            )}
+
+            {/* Offline Status Pill */}
+            <Link
+              to="/offline"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-xs ${
+                isOnline
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                  : "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
+              }`}
+              title={isOnline ? "Online - Click for Offline Library" : "Offline Mode Active - Click for Offline Library"}
+            >
+              {isOnline ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="hidden md:inline">Online</span>
+                  {pendingCount > 0 && (
+                    <span className="bg-indigo-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                      Sync {pendingCount}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Offline</span>
+                </>
+              )}
+            </Link>
+
             {/* Notification Bell */}
             <div className="relative">
               <button

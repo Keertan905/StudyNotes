@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { 
   Bot, 
   Send, 
@@ -20,7 +21,12 @@ import {
   VolumeX,
   Radio,
   Languages,
-  Globe
+  Globe,
+  WifiOff,
+  Play,
+  Pause,
+  Square,
+  MicOff
 } from "lucide-react";
 import { 
   tutorService, 
@@ -100,8 +106,13 @@ export default function TutorPage() {
   // Voice Interaction States (Web Speech Recognition & Synthesis)
   const [isListening, setIsListening] = useState(false);
   const [speakingMsgId, setSpeakingMsgId] = useState<number | null>(null);
+  const [isSpeechPaused, setIsSpeechPaused] = useState<boolean>(false);
+  const [speakingTextSnippet, setSpeakingTextSnippet] = useState<string>("");
   const [speechRate, setSpeechRate] = useState<number>(1.0);
   const [autoSpeak, setAutoSpeak] = useState<boolean>(false);
+  const [micPermissionDenied, setMicPermissionDenied] = useState<boolean>(false);
+  const [voiceReviewOpen, setVoiceReviewOpen] = useState<boolean>(false);
+  const isSpeechSupported = typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
   const recognitionRef = useRef<any>(null);
 
   const handleSwitchMessageLanguage = async (msgId: number, originalContent: string, langCode: string) => {
@@ -144,6 +155,31 @@ export default function TutorPage() {
       .trim();
   };
 
+  const pauseSpeech = () => {
+    if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+      window.speechSynthesis.pause();
+      setIsSpeechPaused(true);
+      toast("Audio paused", { icon: "⏸️" });
+    }
+  };
+
+  const resumeSpeech = () => {
+    if ('speechSynthesis' in window && window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      setIsSpeechPaused(false);
+      toast("Audio resumed", { icon: "▶️" });
+    }
+  };
+
+  const stopSpeech = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setSpeakingMsgId(null);
+      setIsSpeechPaused(false);
+      setSpeakingTextSnippet("");
+    }
+  };
+
   const toggleSpeak = (msgId: number, text: string) => {
     if (!('speechSynthesis' in window)) {
       toast.error("Text-to-speech audio is not supported in this browser.");
@@ -151,12 +187,16 @@ export default function TutorPage() {
     }
 
     if (speakingMsgId === msgId) {
-      window.speechSynthesis.cancel();
-      setSpeakingMsgId(null);
+      if (isSpeechPaused) {
+        resumeSpeech();
+      } else {
+        pauseSpeech();
+      }
       return;
     }
 
     window.speechSynthesis.cancel();
+    setIsSpeechPaused(false);
     const cleaned = cleanTextForSpeech(text);
     const utterance = new SpeechSynthesisUtterance(cleaned);
     utterance.rate = speechRate;
@@ -168,16 +208,26 @@ export default function TutorPage() {
       utterance.lang = foundLang.speechLang;
     }
 
-    utterance.onend = () => setSpeakingMsgId(null);
-    utterance.onerror = () => setSpeakingMsgId(null);
+    utterance.onend = () => {
+      setSpeakingMsgId(null);
+      setIsSpeechPaused(false);
+      setSpeakingTextSnippet("");
+    };
+    utterance.onerror = () => {
+      setSpeakingMsgId(null);
+      setIsSpeechPaused(false);
+      setSpeakingTextSnippet("");
+    };
 
     setSpeakingMsgId(msgId);
+    setSpeakingTextSnippet(text.length > 70 ? text.substring(0, 70) + "..." : text);
     window.speechSynthesis.speak(utterance);
   };
 
   const toggleListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
+      setMicPermissionDenied(true);
       toast.error("Speech Recognition is not supported by your browser. Please use Chrome, Edge, or Safari.");
       return;
     }
@@ -196,6 +246,8 @@ export default function TutorPage() {
 
       recognition.onstart = () => {
         setIsListening(true);
+        setMicPermissionDenied(false);
+        setVoiceReviewOpen(true);
         toast("🎙️ Listening... Speak your question now", { icon: "🗣️" });
       };
 
@@ -208,7 +260,10 @@ export default function TutorPage() {
 
       recognition.onerror = (err: any) => {
         setIsListening(false);
-        if (err.error !== 'no-speech') {
+        if (err.error === 'not-allowed' || err.error === 'service-not-allowed') {
+          setMicPermissionDenied(true);
+          toast.error("Microphone permission was denied. You can continue using text input.");
+        } else if (err.error !== 'no-speech') {
           toast.error(`Microphone error: ${err.error}`);
         }
       };
@@ -221,6 +276,7 @@ export default function TutorPage() {
       recognition.start();
     } catch {
       setIsListening(false);
+      setMicPermissionDenied(true);
       toast.error("Microphone access was denied or unavailable.");
     }
   };
@@ -814,35 +870,77 @@ export default function TutorPage() {
                               {/* Audio Voice Player for Assistant Message */}
                               {!isUser && (
                                 <div className="mt-2 pt-2 border-t border-slate-200/40 flex items-center justify-between text-xs">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleSpeak(msg.id, activeText)}
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all ${
-                                      speakingMsgId === msg.id
-                                        ? "bg-rose-50 text-rose-600 border border-rose-200 animate-pulse"
-                                        : "bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/60"
-                                    }`}
-                                  >
-                                    {speakingMsgId === msg.id ? (
-                                      <>
-                                        <Radio className="w-3.5 h-3.5 text-rose-500 animate-spin" />
-                                        <span>Speaking... (Click to Stop)</span>
-                                        <span className="flex gap-0.5 items-end h-3 ml-1">
-                                          <span className="w-0.5 h-2 bg-rose-500 animate-bounce" />
-                                          <span className="w-0.5 h-3 bg-rose-500 animate-bounce delay-75" />
-                                          <span className="w-0.5 h-1.5 bg-rose-500 animate-bounce delay-150" />
-                                        </span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Volume2 className="w-3.5 h-3.5 text-indigo-600" />
-                                        <span>Listen to Explanation</span>
-                                      </>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleSpeak(msg.id, activeText)}
+                                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all ${
+                                        speakingMsgId === msg.id
+                                          ? isSpeechPaused
+                                            ? "bg-amber-50 text-amber-700 border border-amber-300"
+                                            : "bg-rose-50 text-rose-600 border border-rose-200 animate-pulse"
+                                          : "bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/60"
+                                      }`}
+                                    >
+                                      {speakingMsgId === msg.id ? (
+                                        isSpeechPaused ? (
+                                          <>
+                                            <Play className="w-3.5 h-3.5 text-amber-600" />
+                                            <span>Paused (Click to Resume)</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Pause className="w-3.5 h-3.5 text-rose-600" />
+                                            <span>Speaking... (Click to Pause)</span>
+                                            <span className="flex gap-0.5 items-end h-3 ml-1">
+                                              <span className="w-0.5 h-2 bg-rose-500 animate-bounce" />
+                                              <span className="w-0.5 h-3 bg-rose-500 animate-bounce delay-75" />
+                                              <span className="w-0.5 h-1.5 bg-rose-500 animate-bounce delay-150" />
+                                            </span>
+                                          </>
+                                        )
+                                      ) : (
+                                        <>
+                                          <Volume2 className="w-3.5 h-3.5 text-indigo-600" />
+                                          <span>Listen Aloud</span>
+                                        </>
+                                      )}
+                                    </button>
+
+                                    {speakingMsgId === msg.id && (
+                                      <button
+                                        type="button"
+                                        onClick={stopSpeech}
+                                        className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                                        title="Stop audio playback"
+                                      >
+                                        <Square className="w-3.5 h-3.5" />
+                                      </button>
                                     )}
-                                  </button>
-                                  <span className="text-[10px] text-slate-400">
-                                    {speakingMsgId === msg.id ? `${speechRate}x speed` : "Voice Audio"}
-                                  </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                                    {speakingMsgId === msg.id && (
+                                      <div className="flex items-center gap-1">
+                                        {[0.8, 1.0, 1.25].map((rate) => (
+                                          <button
+                                            key={rate}
+                                            type="button"
+                                            onClick={() => {
+                                              setSpeechRate(rate);
+                                              toggleSpeak(msg.id, activeText);
+                                            }}
+                                            className={`px-1.5 py-0.5 rounded ${
+                                              speechRate === rate ? 'bg-indigo-600 text-white font-bold' : 'hover:bg-slate-200'
+                                            }`}
+                                          >
+                                            {rate}x
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                    <span>{speakingMsgId === msg.id ? (isSpeechPaused ? "Paused" : "Playing") : "Voice Audio"}</span>
+                                  </div>
                                 </div>
                               )}
                             </>
@@ -938,31 +1036,161 @@ export default function TutorPage() {
             </div>
           )}
 
-          {/* Real-time Listening Waveform Banner */}
-          {isListening && (
-            <div className="px-4 py-2 bg-rose-50 border-t border-rose-100 flex items-center justify-between text-xs text-rose-700 animate-pulse">
-              <div className="flex items-center gap-2 font-medium">
-                <Radio className="w-4 h-4 text-rose-600 animate-spin" />
-                <span>Microphone Active — Speak your question clearly...</span>
-                <span className="flex gap-1 items-end h-4 ml-1">
-                  <span className="w-1 h-2 bg-rose-600 animate-bounce" />
-                  <span className="w-1 h-4 bg-rose-600 animate-bounce delay-75" />
-                  <span className="w-1 h-3 bg-rose-600 animate-bounce delay-150" />
-                  <span className="w-1 h-4 bg-rose-600 animate-bounce delay-100" />
+          {/* Global Sticky Audio Player Bar when speaking */}
+          {speakingMsgId !== null && (
+            <div className="px-4 py-2.5 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-xs text-white shadow-lg">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="flex gap-0.5 items-end h-3.5 flex-shrink-0">
+                  <span className={`w-1 bg-indigo-400 rounded-full ${isSpeechPaused ? 'h-2' : 'h-3.5 animate-bounce'}`} />
+                  <span className={`w-1 bg-indigo-400 rounded-full ${isSpeechPaused ? 'h-3' : 'h-2 animate-bounce delay-75'}`} />
+                  <span className={`w-1 bg-indigo-400 rounded-full ${isSpeechPaused ? 'h-1.5' : 'h-3 animate-bounce delay-150'}`} />
+                  <span className={`w-1 bg-indigo-400 rounded-full ${isSpeechPaused ? 'h-2.5' : 'h-3.5 animate-bounce delay-100'}`} />
+                </div>
+                <div className="overflow-hidden">
+                  <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider block">
+                    {isSpeechPaused ? "Audio Paused" : "Playing Voice Explanation"}
+                  </span>
+                  <p className="text-xs text-slate-300 truncate font-medium">
+                    {speakingTextSnippet || "AI Tutor Voice Response"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={isSpeechPaused ? resumeSpeech : pauseSpeech}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1 shadow-sm transition"
+                >
+                  {isSpeechPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
+                  <span>{isSpeechPaused ? "Resume" : "Pause"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={stopSpeech}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/80 hover:text-rose-400 text-slate-300 transition"
+                  title="Stop playback"
+                >
+                  <Square className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Voice Speech-to-Text Review Drawer */}
+          {voiceReviewOpen && (
+            <div className="p-4 bg-indigo-50/80 border-t border-indigo-100 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-150">
+              <div className="flex items-center justify-between text-xs font-semibold text-indigo-900">
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-lg ${isListening ? 'bg-rose-500 text-white animate-pulse' : 'bg-indigo-600 text-white'}`}>
+                    <Mic className="w-4 h-4" />
+                  </div>
+                  <span>{isListening ? "🎙️ Listening... Speak your question clearly" : "🎙️ Voice Question Captured — Review & Edit"}</span>
+                  {isListening && (
+                    <span className="flex gap-1 items-end h-3 ml-1">
+                      <span className="w-1 h-2 bg-rose-500 animate-bounce" />
+                      <span className="w-1 h-3.5 bg-rose-500 animate-bounce delay-75" />
+                      <span className="w-1 h-2 bg-rose-500 animate-bounce delay-150" />
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {isListening ? (
+                    <button
+                      type="button"
+                      onClick={toggleListening}
+                      className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition"
+                    >
+                      Done Speaking
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={toggleListening}
+                      className="px-2.5 py-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs font-semibold transition"
+                    >
+                      Speak Again
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVoiceReviewOpen(false);
+                      if (isListening) toggleListening();
+                    }}
+                    className="p-1 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Editable Transcript Input */}
+              <div className="space-y-1.5">
+                <div className="text-[11px] text-slate-500 font-medium">
+                  Spoken question transcript (you can edit text before sending):
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder={isListening ? "Listening to your voice..." : "Your spoken question will appear here..."}
+                    className="flex-1 px-3.5 py-2 text-xs border border-indigo-200 rounded-xl bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!inputMessage.trim()) return;
+                      setVoiceReviewOpen(false);
+                      handleSendMessage();
+                    }}
+                    disabled={!inputMessage.trim() || isSending}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Submit Question</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Fallback Warning for Denied / Unsupported Microphone */}
+          {(micPermissionDenied || !isSpeechSupported) && (
+            <div className="px-4 py-2 bg-amber-50 border-t border-amber-200 flex items-center justify-between text-xs text-amber-800">
+              <div className="flex items-center gap-2">
+                <MicOff className="w-4 h-4 text-amber-600" />
+                <span>
+                  {!isSpeechSupported 
+                    ? "Speech recognition is not supported in this browser. Text input is active." 
+                    : "Microphone access was denied or unavailable. Voice input is optional; text chat is fully functional."}
                 </span>
               </div>
               <button
                 type="button"
-                onClick={toggleListening}
-                className="px-2 py-0.5 rounded-md bg-rose-200/80 hover:bg-rose-300 text-rose-900 font-semibold text-[11px]"
+                onClick={() => setMicPermissionDenied(false)}
+                className="text-amber-900 font-bold hover:underline text-[11px]"
               >
-                Done Speaking
+                Dismiss
               </button>
             </div>
           )}
 
           {/* Bottom Chat Input Form */}
           <div className="p-4 border-t border-slate-200 bg-white">
+            {typeof navigator !== "undefined" && !navigator.onLine && (
+              <div className="mb-2.5 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-center justify-between">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <WifiOff className="w-4 h-4 text-amber-600" />
+                  AI Tutor requires an internet connection. Use Offline Library for saved notes & flashcards.
+                </span>
+                <Link to="/offline" className="font-bold underline text-amber-900 hover:text-amber-950">
+                  Open Offline Library
+                </Link>
+              </div>
+            )}
             <form
               onSubmit={(e) => {
                 e.preventDefault();

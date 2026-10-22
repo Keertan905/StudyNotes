@@ -24,6 +24,7 @@ public class StudySessionService {
     private final SubjectRepository subjectRepository;
     private final TopicRepository topicRepository;
     private final UserRepository userRepository;
+    private final GamificationService gamificationService;
 
     private User getUserByEmail(String email) {
         return userRepository.findByEmail(email.toLowerCase().trim())
@@ -63,6 +64,11 @@ public class StudySessionService {
 
         StudySession saved = studySessionRepository.save(session);
         log.info("Logged study session '{}' ({} mins) for user {}", saved.getTitle(), saved.getActualDurationMinutes(), user.getEmail());
+        try {
+            gamificationService.awardStudySessionXp(user, saved, null);
+        } catch (Exception ex) {
+            log.warn("Failed to award study session XP: {}", ex.getMessage());
+        }
         return mapToResponse(saved);
     }
 
