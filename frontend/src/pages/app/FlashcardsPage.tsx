@@ -78,19 +78,60 @@ export default function FlashcardsPage() {
     try {
       setIsLoading(true);
       const [allCards, dueList, subList, statsData] = await Promise.all([
-        flashcardService.getCards(),
-        flashcardService.getDueCards(),
-        subjectService.getSubjects(),
-        flashcardService.getStats(),
+        flashcardService.getCards().catch(() => []),
+        flashcardService.getDueCards().catch(() => []),
+        subjectService.getSubjects().catch(() => []),
+        flashcardService.getStats().catch(() => null),
       ]);
-      setCards(allCards);
-      setDueCards(dueList);
-      setSubjects(subList);
-      setStats(statsData);
+
+      if (allCards.length > 0 || subList.length > 0) {
+        setCards(allCards);
+        setDueCards(dueList);
+        setSubjects(subList);
+        setStats(statsData);
+
+        // Auto-cache to offline IndexedDB
+        offlineService.downloadAllFlashcards().catch(() => {});
+      } else {
+        // Fallback to offline cached deck if API returned empty/failed
+        const offlineCards = await offlineService.getOfflineFlashcards();
+        if (offlineCards.length > 0) {
+          const mappedCards: Flashcard[] = offlineCards.map((c) => ({
+            id: c.id,
+            subjectId: c.subjectId,
+            subjectName: c.subjectName,
+            unitId: c.unitId,
+            topicId: c.topicId,
+            front: c.front,
+            back: c.back,
+            hint: c.hint,
+            difficulty: (c.difficulty as any) || "MEDIUM",
+            intervalDays: c.intervalDays || 1,
+            easeFactor: c.easeFactor || 2.5,
+            repetitions: c.repetitions || 0,
+            nextReviewDate: c.nextReviewDate || new Date().toISOString().split("T")[0],
+            lastReviewedAt: c.lastReviewedAt,
+            reviewCount: c.repetitions || 0,
+            isDue: !c.nextReviewDate || c.nextReviewDate <= new Date().toISOString().split("T")[0],
+            createdAt: c.downloadedAt || new Date().toISOString(),
+          }));
+          setCards(mappedCards);
+          const due = mappedCards.filter((c) => c.isDue);
+          setDueCards(due);
+          setStats({
+            totalCards: mappedCards.length,
+            dueTodayCount: due.length,
+            masteredCount: mappedCards.filter((c) => (c.intervalDays || 0) >= 21).length,
+            learningCount: mappedCards.filter((c) => (c.intervalDays || 0) < 21).length,
+            totalReviews: mappedCards.reduce((acc, c) => acc + (c.repetitions || 0), 0),
+          });
+          toast("Loaded offline cached flashcards", { icon: "💾" });
+        }
+      }
 
       // Pre-select subject if param given
       const qSubId = searchParams.get("subjectId");
-      if (qSubId) {
+      if (qSubId && subList.length > 0) {
         const found = subList.find((s) => s.id === Number(qSubId));
         if (found) {
           setGenSubjectId(found.id);
@@ -99,6 +140,37 @@ export default function FlashcardsPage() {
         }
       }
     } catch {
+      try {
+        const offlineCards = await offlineService.getOfflineFlashcards();
+        if (offlineCards.length > 0) {
+          const mappedCards: Flashcard[] = offlineCards.map((c) => ({
+            id: c.id,
+            subjectId: c.subjectId,
+            subjectName: c.subjectName,
+            unitId: c.unitId,
+            topicId: c.topicId,
+            front: c.front,
+            back: c.back,
+            hint: c.hint,
+            difficulty: (c.difficulty as any) || "MEDIUM",
+            intervalDays: c.intervalDays || 1,
+            easeFactor: c.easeFactor || 2.5,
+            repetitions: c.repetitions || 0,
+            nextReviewDate: c.nextReviewDate || new Date().toISOString().split("T")[0],
+            lastReviewedAt: c.lastReviewedAt,
+            reviewCount: c.repetitions || 0,
+            isDue: !c.nextReviewDate || c.nextReviewDate <= new Date().toISOString().split("T")[0],
+            createdAt: c.downloadedAt || new Date().toISOString(),
+          }));
+          setCards(mappedCards);
+          const due = mappedCards.filter((c) => c.isDue);
+          setDueCards(due);
+          toast("Loaded offline cached flashcards", { icon: "💾" });
+          return;
+        }
+      } catch {
+        // ignore offline read error
+      }
       toast.error("Failed to load flashcard decks");
     } finally {
       setIsLoading(false);
@@ -152,7 +224,23 @@ export default function FlashcardsPage() {
       // Refresh stats
       flashcardService.getStats().then(setStats).catch(() => {});
     } catch {
-      toast.error("Failed to record card review");
+      // Offline fallback: update local SM-2 and queue action
+      try {
+        await offlineService.recordOfflineFlashcardReview(currentCard.id, rating, 15);
+        toast.success("Card review saved offline (queued for sync)", { icon: "🔄" });
+
+        // Advance locally
+        if (reviewIndex + 1 < dueCards.length) {
+          setReviewIndex((prev) => prev + 1);
+          setIsFlipped(false);
+          setShowHint(false);
+        } else {
+          setSessionCompleted(true);
+          toast.success("Review session completed offline!");
+        }
+      } catch {
+        toast.error("Failed to record card review");
+      }
     } finally {
       setIsReviewing(false);
     }

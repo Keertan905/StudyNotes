@@ -22,6 +22,7 @@ import {
   type StudyTask,
 } from "../../services/studySession.service";
 import { subjectService, type SubjectItem } from "../../services/subject.service";
+import { offlineService } from "../../services/offline.service";
 import toast from "react-hot-toast";
 
 type TimerMode = "POMODORO" | "SHORT_BREAK" | "LONG_BREAK" | "CUSTOM";
@@ -89,10 +90,15 @@ export default function TimerPage() {
     try {
       setIsLoading(true);
       const [subs, sessList, statData, taskList] = await Promise.all([
-        subjectService.getSubjects(),
-        studySessionService.getSessions(),
-        studySessionService.getStats(),
-        studySessionService.getTasks(),
+        subjectService.getSubjects().catch(() => []),
+        studySessionService.getSessions().catch(() => []),
+        studySessionService.getStats().catch(() => ({
+          minutesStudiedToday: 0,
+          minutesStudiedThisWeek: 0,
+          completedSessionsCount: 0,
+          currentStreakDays: 0,
+        })),
+        studySessionService.getTasks().catch(() => []),
       ]);
       setSubjects(subs);
       setSessions(sessList);
@@ -100,7 +106,9 @@ export default function TimerPage() {
       setTasks(taskList);
       if (subs.length > 0) setSelectedSubjectId(subs[0].id);
     } catch {
-      toast.error("Failed to load study sessions");
+      // Graceful fallback without blocking user from studying
+      setSubjects([]);
+      setSessions([]);
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +169,21 @@ export default function TimerPage() {
         setSessions((prev) => [logged, ...prev]);
         studySessionService.getStats().then(setStats).catch(() => {});
       } catch {
-        toast.error("Failed to persist session log to database");
+        // Offline fallback: save study session to IndexedDB sync queue
+        try {
+          const sub = subjects.find((s) => s.id === selectedSubjectId);
+          const title = sessionTopic.trim() || `${sub ? sub.name : "Deep Study"} Session`;
+          await offlineService.recordOfflineStudySession({
+            subjectId: selectedSubjectId,
+            title,
+            sessionType: timerMode,
+            actualDurationMinutes: targetMinutes,
+            notes: sessionNotes.trim() || undefined,
+          });
+          toast.success("Study session saved offline! Will auto-sync when online.", { icon: "💾" });
+        } catch {
+          toast.error("Failed to persist session log");
+        }
       }
     }
 

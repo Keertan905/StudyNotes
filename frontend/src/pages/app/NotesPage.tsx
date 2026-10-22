@@ -52,15 +52,27 @@ export default function NotesPage() {
   const loadData = async () => {
     try {
       const [subs, notes] = await Promise.all([
-        subjectService.getSubjects(),
-        noteService.getNotes(),
+        subjectService.getSubjects().catch(() => []),
+        noteService.getNotes().catch(() => []),
       ]);
       setSubjects(subs);
       setSavedNotes(notes);
 
+      if (notes.length > 0) {
+        // Auto-cache notes to offline IndexedDB
+        offlineService.downloadAllNotes().catch(() => {});
+      } else {
+        // Fallback to offline cached notes
+        const offlineNotes = await offlineService.getOfflineNotes();
+        if (offlineNotes.length > 0) {
+          setSavedNotes(offlineNotes as any);
+          toast("Loaded offline cached revision notes", { icon: "💾" });
+        }
+      }
+
       // Pre-select subject if in query param
       const qSubId = searchParams.get("subjectId");
-      if (qSubId && !subjectName) {
+      if (qSubId && !subjectName && subs.length > 0) {
         const found = subs.find(s => s.id === Number(qSubId));
         if (found) {
           setSubjectId(found.id);
@@ -68,6 +80,16 @@ export default function NotesPage() {
         }
       }
     } catch {
+      try {
+        const offlineNotes = await offlineService.getOfflineNotes();
+        if (offlineNotes.length > 0) {
+          setSavedNotes(offlineNotes as any);
+          toast("Loaded offline cached revision notes", { icon: "💾" });
+          return;
+        }
+      } catch {
+        // ignore
+      }
       toast.error("Failed to load subjects or notes");
     }
   };
