@@ -11,7 +11,7 @@ studyapp/
 ├── backend/               # Spring Boot 4 + Java 17 + Spring Security 6 + JPA + MySQL
 │   ├── src/main/java/     # Application source (controllers, services, repositories, models, security, AI)
 │   ├── src/main/resources/# application.properties, database configuration
-│   ├── src/test/java/     # Automated unit & integration test suites (19/19 passing)
+│   ├── src/test/java/     # Automated unit & integration test suites (34/34 passing)
 │   └── pom.xml            # Maven dependencies (JPA, MySQL, JJWT, PDFBox, Lombok)
 │
 └── frontend/              # React 19 + TypeScript + Vite + Tailwind CSS
@@ -221,6 +221,16 @@ app.youtube.timeout-seconds=15
   - ✅ Text-to-Speech synthesis with granular audio playback controls: **Play**, **Pause**, **Resume**, and **Stop** buttons on individual messages and sticky global player bar
   - ✅ Playback speed controls ($0.8\times, 1.0\times, 1.25\times$) and automatic multi-accent matching for translated explanations
   - ✅ Graceful non-blocking text-only fallback with informative banner guidance when microphone access is denied or unsupported
+
+- ✅ **Phase 22: Offline Resilience, Session Guards & Navigation Flow**
+  - ✅ **Spring Security Custom Handlers**: Configured explicit `AuthenticationEntryPoint` returning HTTP 401 Unauthorized for expired or missing tokens, preventing silent 403 authorization locks.
+  - ✅ **Auto-Expiring Session Interceptor**: Frontend Axios interceptor detects expired or invalid sessions, purges stale credentials, and smoothly redirects students to `/login?expired=true`.
+  - ✅ **Universal Offline Fallbacks**:
+    - **Flashcards** (`/flashcards`): Automatic IndexedDB caching, offline SM-2 reviews, queue persistence, and background sync without blocking error toasts.
+    - **Study Timer** (`/timer`): Isolated promise error handling ensuring Pomodoro timers, statistics, and task lists always initialize smoothly.
+    - **AI Notes** (`/notes`): IndexedDB persistence and instant offline fallback for revision notes.
+  - ✅ **Streamlined Navigation Layout**: Left sidebar reorganized to prioritize immediate student workflows: **Dashboard** $\rightarrow$ **My Subjects** $\rightarrow$ **AI Tutor** $\rightarrow$ **Video Learning**.
+
 
 
 
