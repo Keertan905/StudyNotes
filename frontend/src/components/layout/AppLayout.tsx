@@ -49,9 +49,11 @@ import toast from "react-hot-toast";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/subjects", label: "My Subjects", icon: GraduationCap },
+  { to: "/tutor", label: "AI Tutor", icon: Bot },
+  { to: "/youtube-finder", label: "Video Learning", icon: Video },
   { to: "/rewards", label: "Rewards & Streaks", icon: Trophy },
   { to: "/offline", label: "Offline Library", icon: HardDrive },
-  { to: "/subjects", label: "My Subjects", icon: GraduationCap },
   { to: "/notes", label: "AI Notes", icon: FileText },
   { to: "/mindmap", label: "AI Mind Maps", icon: Network },
   { to: "/diagrams", label: "Diagram & Infographics", icon: Workflow },
@@ -60,8 +62,6 @@ const navItems = [
   { to: "/lecture-summarizer", label: "Lecture Summarizer", icon: BookOpen },
   { to: "/code-explainer", label: "Code Explainer", icon: Code2 },
   { to: "/image-qa", label: "Image Q&A Solver", icon: Camera },
-  { to: "/tutor", label: "AI Tutor", icon: Bot },
-  { to: "/youtube-finder", label: "Video Learning", icon: Video },
   { to: "/quiz", label: "Quiz & Exams", icon: HelpCircle },
   { to: "/flashcards", label: "Flashcards", icon: Sparkles },
   { to: "/knowledge-gaps", label: "Knowledge Gaps", icon: BrainCircuit },
