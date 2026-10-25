@@ -293,11 +293,11 @@ export default function HistoryPage() {
                 Start Focus Session
               </Link>
               <Link
-                to="/flashcards"
+                to="/notes"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200 transition-colors"
               >
-                <Sparkles className="w-4 h-4" />
-                Review Flashcards
+                <FileText className="w-4 h-4" />
+                Review AI Notes
               </Link>
             </div>
           </div>

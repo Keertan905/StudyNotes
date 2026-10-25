@@ -11,6 +11,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import PersonalInfoPage from './pages/auth/PersonalInfoPage';
 
 // Authenticated App Shell & Pages
 import AppLayout from './components/layout/AppLayout';
@@ -19,19 +20,12 @@ import SubjectsPage from './pages/app/SubjectsPage';
 import NotesPage from './pages/app/NotesPage';
 import TutorPage from './pages/app/TutorPage';
 import QuizPage from './pages/app/QuizPage';
-import FlashcardsPage from './pages/app/FlashcardsPage';
-import KnowledgeGapsPage from './pages/app/KnowledgeGapsPage';
-import MistakesPage from './pages/app/MistakesPage';
-import PlannerPage from './pages/app/PlannerPage';
-import AnalyticsPage from './pages/app/AnalyticsPage';
 import TimerPage from './pages/app/TimerPage';
 import HistoryPage from './pages/app/HistoryPage';
 import SettingsPage from './pages/app/SettingsPage';
 import YouTubeFinderPage from './pages/app/YouTubeFinderPage';
-import MindMapPage from './pages/app/MindMapPage';
 import LectureSummarizerPage from './pages/app/LectureSummarizerPage';
 import CodeExplainerPage from './pages/app/CodeExplainerPage';
-import ImageQaPage from './pages/app/ImageQaPage';
 import OfflineLibraryPage from './pages/app/OfflineLibraryPage';
 import RewardsPage from './pages/app/RewardsPage';
 import AdminDashboardPage from './pages/app/AdminDashboardPage';
@@ -94,7 +88,8 @@ function AppRoutes() {
       <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
       <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
 
-      {/* Onboarding route (protected) */}
+      {/* Onboarding & Profile Completion route */}
+      <Route path="/personal-info" element={<PersonalInfoPage />} />
       <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
 
       {/* Authenticated routes inside AppLayout */}
@@ -104,19 +99,19 @@ function AppRoutes() {
         <Route path="/notes" element={<NotesPage />} />
         <Route path="/tutor" element={<TutorPage />} />
         <Route path="/quiz" element={<QuizPage />} />
-        <Route path="/flashcards" element={<FlashcardsPage />} />
-        <Route path="/knowledge-gaps" element={<KnowledgeGapsPage />} />
-        <Route path="/mistakes" element={<MistakesPage />} />
-        <Route path="/planner" element={<PlannerPage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
+        <Route path="/flashcards" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/knowledge-gaps" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/mistakes" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/planner" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/analytics" element={<Navigate to="/dashboard" replace />} />
         <Route path="/timer" element={<TimerPage />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/youtube-finder" element={<YouTubeFinderPage />} />
-        <Route path="/mindmap" element={<MindMapPage />} />
+        <Route path="/mindmap" element={<Navigate to="/dashboard" replace />} />
         <Route path="/lecture-summarizer" element={<LectureSummarizerPage />} />
         <Route path="/code-explainer" element={<CodeExplainerPage />} />
-        <Route path="/image-qa" element={<ImageQaPage />} />
+        <Route path="/image-qa" element={<Navigate to="/tutor" replace />} />
         <Route path="/diagrams" element={<DiagramMakerPage />} />
         <Route path="/virtual-lab" element={<VirtualLabPage />} />
         <Route path="/problem-solver" element={<ProblemSolverPage />} />

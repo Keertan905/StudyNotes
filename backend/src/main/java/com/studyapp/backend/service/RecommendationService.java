@@ -1,26 +1,25 @@
 package com.studyapp.backend.service;
 
-import com.studyapp.backend.dto.KnowledgeGapDto;
 import com.studyapp.backend.dto.RecommendationDto;
 import com.studyapp.backend.exception.ResourceNotFoundException;
-import com.studyapp.backend.model.*;
-import com.studyapp.backend.repository.*;
+import com.studyapp.backend.model.Subject;
+import com.studyapp.backend.model.User;
+import com.studyapp.backend.repository.SubjectRepository;
+import com.studyapp.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class RecommendationService {
 
-    private final MistakeRecordRepository mistakeRecordRepository;
-    private final FlashcardRepository flashcardRepository;
-    private final KnowledgeGapService knowledgeGapService;
+    private final SubjectRepository subjectRepository;
     private final UserRepository userRepository;
 
     private User getUserByEmail(String email) {
@@ -32,105 +31,67 @@ public class RecommendationService {
     public RecommendationDto.RecommendationResponse getAdaptiveRecommendations(String userEmail) {
         User user = getUserByEmail(userEmail);
         List<RecommendationDto.RecommendationItem> items = new ArrayList<>();
+        List<Subject> subjects = subjectRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
 
-        // 1. Check Unresolved Mistakes (Highest urgency)
-        List<MistakeRecord> unresolvedMistakes = mistakeRecordRepository.findByUserIdAndStatusOrderByCreatedAtDesc(user.getId(), "UNRESOLVED");
-        if (!unresolvedMistakes.isEmpty()) {
-            MistakeRecord first = unresolvedMistakes.get(0);
-            String subName = first.getSubject() != null ? first.getSubject().getName() : "Your Courses";
+        if (!subjects.isEmpty()) {
+            Subject primary = subjects.get(0);
             items.add(RecommendationDto.RecommendationItem.builder()
-                    .id("rec-mistake-" + first.getId())
-                    .type("MISTAKE_RETRY")
+                    .id("rec-quiz-" + primary.getId())
+                    .type("QUIZ_PRACTICE")
                     .priority("CRITICAL")
-                    .title("Resolve " + unresolvedMistakes.size() + " Misconceptions in " + subName)
-                    .description("You missed questions categorized as " + first.getMistakeCategory().replace('_', ' ') + ". Re-attempting missed questions is proven to double retention.")
-                    .reason(first.getAiRevisionTip() != null ? first.getAiRevisionTip() : "Immediate retrieval practice prevents repeated exam errors.")
-                    .subjectId(first.getSubject() != null ? first.getSubject().getId() : null)
-                    .subjectName(subName)
-                    .topicTag(first.getQuestion() != null ? first.getQuestion().getTopicTag() : null)
-                    .actionUrl("/mistakes")
-                    .buttonText("Open Mistake Notebook")
+                    .title("Practice Exam Questions: " + primary.getName())
+                    .description("Test your recall with AI-generated MCQs and exam-style diagnostic questions.")
+                    .reason("Active retrieval practice is proven to boost exam retention by up to 40%.")
+                    .subjectId(primary.getId())
+                    .subjectName(primary.getName())
+                    .actionUrl("/quiz?subjectId=" + primary.getId())
+                    .buttonText("Generate Practice Quiz")
                     .build());
-        }
 
-        // 2. Check Overdue Flashcards
-        List<Flashcard> dueCards = flashcardRepository.findDueForReview(user.getId(), LocalDate.now());
-        if (!dueCards.isEmpty()) {
-            Flashcard sample = dueCards.get(0);
-            String subName = sample.getSubject() != null ? sample.getSubject().getName() : "General";
             items.add(RecommendationDto.RecommendationItem.builder()
-                    .id("rec-flashcard-due")
-                    .type("FLASHCARD_REVIEW")
-                    .priority(dueCards.size() > 10 ? "CRITICAL" : "RECOMMENDED")
-                    .title("Review " + dueCards.size() + " Spaced Repetition Cards")
-                    .description("SM-2 algorithm scheduled these cards for optimal memory consolidation today.")
-                    .reason("Cards reviewed today reset memory decay intervals for up to 2-3 weeks.")
-                    .subjectId(sample.getSubject() != null ? sample.getSubject().getId() : null)
-                    .subjectName(subName)
-                    .actionUrl("/flashcards")
-                    .buttonText("Start 5-Min Review")
-                    .build());
-        }
-
-        // 3. Check Knowledge Gaps & Decay Risk
-        KnowledgeGapDto.KnowledgeGapResponse gaps = knowledgeGapService.analyzeGaps(userEmail);
-        if (gaps.getHighPriorityGaps() != null) {
-            for (KnowledgeGapDto.TopicGapItem gap : gaps.getHighPriorityGaps()) {
-                if (items.size() >= 5) break;
-
-                if ("WEAK".equals(gap.getMasteryLevel())) {
-                    items.add(RecommendationDto.RecommendationItem.builder()
-                            .id("rec-gap-" + gap.getSubjectId() + "-" + Math.abs(gap.getTopicTag().hashCode()))
-                            .type("QUIZ_PRACTICE")
-                            .priority("CRITICAL")
-                            .title("Strengthen Weak Area: " + gap.getTopicTag())
-                            .description("Accuracy is currently " + gap.getAccuracyPercentage() + "% across " + gap.getTotalQuestionsAttempted() + " questions in " + gap.getSubjectName() + ".")
-                            .reason(gap.getRecommendedAction())
-                            .subjectId(gap.getSubjectId())
-                            .subjectName(gap.getSubjectName())
-                            .topicTag(gap.getTopicTag())
-                            .actionUrl("/quiz?topic=" + gap.getTopicTag() + "&subjectName=" + gap.getSubjectName())
-                            .buttonText("Generate Targeted Quiz")
-                            .build());
-                } else if ("HIGH".equals(gap.getDecayRisk())) {
-                    items.add(RecommendationDto.RecommendationItem.builder()
-                            .id("rec-decay-" + gap.getSubjectId() + "-" + Math.abs(gap.getTopicTag().hashCode()))
-                            .type("ASK_TUTOR")
-                            .priority("RECOMMENDED")
-                            .title("Memory Decay Alert: " + gap.getTopicTag())
-                            .description("Not practiced for " + gap.getDaysSinceLastPracticed() + " days. Risk of forgetting core exam definitions.")
-                            .reason("Ask the AI Tutor for a quick refresher summary.")
-                            .subjectId(gap.getSubjectId())
-                            .subjectName(gap.getSubjectName())
-                            .topicTag(gap.getTopicTag())
-                            .actionUrl("/tutor?topic=" + gap.getTopicTag())
-                            .buttonText("Consult AI Tutor")
-                            .build());
-                }
-            }
-        }
-
-        // If list is small, add a general recommendation
-        if (items.isEmpty()) {
-            items.add(RecommendationDto.RecommendationItem.builder()
-                    .id("rec-default-timer")
+                    .id("rec-notes-" + primary.getId())
                     .type("READ_NOTES")
                     .priority("RECOMMENDED")
-                    .title("Deep Focus Session")
-                    .description("All current flashcards and errors are up to date! Log a 25-minute Pomodoro focus block.")
-                    .reason("Consistent daily deep focus hours boost semester exam scores by up to 34%.")
-                    .actionUrl("/timer")
-                    .buttonText("Launch Focus Timer")
+                    .title("Review AI Revision Notes: " + primary.getName())
+                    .description("Read structured high-yield revision summaries, key formulas, and exam tips.")
+                    .reason("Consolidate conceptual foundations before moving on to new units.")
+                    .subjectId(primary.getId())
+                    .subjectName(primary.getName())
+                    .actionUrl("/notes")
+                    .buttonText("Open AI Notes")
+                    .build());
+
+            items.add(RecommendationDto.RecommendationItem.builder()
+                    .id("rec-tutor-" + primary.getId())
+                    .type("ASK_TUTOR")
+                    .priority("RECOMMENDED")
+                    .title("Consult AI Tutor: " + primary.getName())
+                    .description("Have an interactive discussion on challenging concepts, formulas, and proofs.")
+                    .reason("Get immediate step-by-step guidance whenever you encounter complex topics.")
+                    .subjectId(primary.getId())
+                    .subjectName(primary.getName())
+                    .actionUrl("/tutor")
+                    .buttonText("Chat with AI Tutor")
                     .build());
         }
 
-        String headline = !unresolvedMistakes.isEmpty()
-                ? "You have " + unresolvedMistakes.size() + " active misconception" + (unresolvedMistakes.size() > 1 ? "s" : "") + " to clear."
-                : (gaps.getCriticalWeakAreas() > 0
-                ? "Targeting " + gaps.getCriticalWeakAreas() + " high-yield weak topic" + (gaps.getCriticalWeakAreas() > 1 ? "s" : "") + " for today."
-                : "Great mastery velocity! Maintain your retention with spaced reviews.");
+        // Focus session recommendation
+        items.add(RecommendationDto.RecommendationItem.builder()
+                .id("rec-default-timer")
+                .type("READ_NOTES")
+                .priority("RECOMMENDED")
+                .title("25-Minute Deep Focus Session")
+                .description("Boost your daily study rhythm with a distraction-free Pomodoro concentration block.")
+                .reason("Consistent daily deep focus hours boost semester exam scores by up to 34%.")
+                .actionUrl("/timer")
+                .buttonText("Launch Study Timer")
+                .build());
 
-        String advisory = "Our adaptive engine prioritized these actions based on your recent quiz error patterns, SM-2 decay timestamps, and topic accuracy benchmarks.";
+        String headline = !subjects.isEmpty()
+                ? "Calibrated recommendations for " + subjects.get(0).getName() + "."
+                : "Welcome to StudyApp! Enroll in your subjects to unlock personalized study recommendations.";
+
+        String advisory = "Our adaptive engine highlights high-yield study workflows based on your enrolled syllabus subjects and active study modules.";
 
         return RecommendationDto.RecommendationResponse.builder()
                 .studentHeadline(headline)

@@ -43,6 +43,35 @@ export interface SubjectItem {
   }[];
 }
 
+export interface ExtractedSubjectItem {
+  name: string;
+  code?: string;
+  semester?: number;
+  color?: string;
+  subjectType?: string;
+  needsReview?: boolean;
+  reviewReason?: string;
+  orderIndex?: number;
+  units: UnitItem[];
+}
+
+export interface SyllabusAiExtractResponse {
+  subjects: ExtractedSubjectItem[];
+  extractionSource?: string;
+  rawNotes?: string;
+}
+
+export interface BatchImportRequest {
+  subjects: {
+    name: string;
+    code?: string;
+    semester?: number;
+    examDate?: string;
+    color?: string;
+    units?: UnitItem[];
+  }[];
+}
+
 export const subjectService = {
   async getSubjects(includeArchived = false): Promise<SubjectItem[]> {
     const res = await api.get<SubjectItem[]>('/subjects', { params: { includeArchived } });
@@ -96,6 +125,22 @@ export const subjectService = {
     const res = await api.post<UnitItem[]>('/subjects/extract-syllabus', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+    return res.data;
+  },
+
+  async aiExtractSyllabus(file?: File, text?: string): Promise<SyllabusAiExtractResponse> {
+    const formData = new FormData();
+    if (file) formData.append('file', file);
+    if (text) formData.append('text', text);
+
+    const res = await api.post<SyllabusAiExtractResponse>('/subjects/ai-extract-syllabus', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
+
+  async batchImportSubjects(data: BatchImportRequest): Promise<SubjectItem[]> {
+    const res = await api.post<SubjectItem[]>('/subjects/batch-import', data);
     return res.data;
   },
 };

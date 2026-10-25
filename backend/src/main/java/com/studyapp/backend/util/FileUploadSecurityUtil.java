@@ -12,7 +12,7 @@ public final class FileUploadSecurityUtil {
     private FileUploadSecurityUtil() {}
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
-            "pdf", "txt", "md", "markdown", "doc", "docx"
+            "pdf", "txt", "md", "markdown", "doc", "docx", "jpg", "jpeg", "png", "webp"
     );
 
     private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
@@ -21,7 +21,10 @@ public final class FileUploadSecurityUtil {
             "text/markdown",
             "application/msword",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/octet-stream"
+            "application/octet-stream",
+            "image/jpeg",
+            "image/png",
+            "image/webp"
     );
 
     private static final long MAX_FILE_SIZE_BYTES = 20L * 1024 * 1024; // 20 MB
@@ -100,5 +103,15 @@ public final class FileUploadSecurityUtil {
 
         // Strip null bytes and non-printable control characters (except newline, tab, carriage return)
         return content.replace("\0", "").trim();
+    }
+
+    public static boolean isPdfFile(String filename) {
+        return filename != null && filename.toLowerCase(Locale.ROOT).endsWith(".pdf");
+    }
+
+    public static boolean isImageFile(String filename) {
+        if (filename == null) return false;
+        String lower = filename.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp");
     }
 }

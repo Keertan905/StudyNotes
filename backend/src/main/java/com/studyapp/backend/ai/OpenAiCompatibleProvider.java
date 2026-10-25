@@ -29,6 +29,9 @@ public class OpenAiCompatibleProvider implements AiProvider {
     @Value("${app.ai.model:gpt-4o}")
     private String model;
 
+    @Value("${app.ai.vision-model:qwen/qwen3.8-27b}")
+    private String visionModel;
+
     @Value("${app.ai.timeout-seconds:60}")
     private int timeoutSeconds;
 
@@ -96,6 +99,76 @@ public class OpenAiCompatibleProvider implements AiProvider {
         } catch (Exception e) {
             log.error("AI Generation failed: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to generate content: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public String generateWithVision(String systemPrompt, String userPrompt, String mimeType, byte[] imageBytes) {
+        if (!isConfigured()) {
+            log.warn("AI Provider requested for vision but app.ai.api-key is not configured.");
+            return generateOfflineFallback(systemPrompt, userPrompt);
+        }
+
+        if (imageBytes == null || imageBytes.length == 0) {
+            return generate(systemPrompt, userPrompt);
+        }
+
+        try {
+            String safeMime = (mimeType != null && !mimeType.isBlank()) ? mimeType : "image/jpeg";
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+            String dataUrl = "data:" + safeMime + ";base64," + base64Image;
+
+            List<Map<String, Object>> messages = new ArrayList<>();
+            if (systemPrompt != null && !systemPrompt.isBlank()) {
+                messages.add(Map.of("role", "system", "content", systemPrompt));
+            }
+
+            List<Map<String, Object>> contentParts = new ArrayList<>();
+            if (userPrompt != null && !userPrompt.isBlank()) {
+                contentParts.add(Map.of("type", "text", "text", userPrompt));
+            }
+            contentParts.add(Map.of(
+                    "type", "image_url",
+                    "image_url", Map.of("url", dataUrl)
+            ));
+
+            messages.add(Map.of("role", "user", "content", contentParts));
+
+            String activeVisionModel = (visionModel != null && !visionModel.isBlank()) ? visionModel : "qwen/qwen3.8-27b";
+
+            Map<String, Object> requestBodyMap = new HashMap<>();
+            requestBodyMap.put("model", activeVisionModel);
+            requestBodyMap.put("messages", messages);
+            requestBodyMap.put("temperature", 0.2);
+            requestBodyMap.put("max_tokens", maxTokens);
+
+            String requestBodyJson = objectMapper.writeValueAsString(requestBodyMap);
+            String endpoint = baseUrl.endsWith("/") ? baseUrl + "chat/completions" : baseUrl + "/chat/completions";
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(endpoint))
+                    .timeout(Duration.ofSeconds(timeoutSeconds))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + apiKey.trim())
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBodyJson))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                JsonNode root = objectMapper.readTree(response.body());
+                JsonNode choices = root.path("choices");
+                if (choices.isArray() && !choices.isEmpty()) {
+                    return choices.get(0).path("message").path("content").asText();
+                }
+                throw new RuntimeException("Empty response choices from AI vision provider");
+            } else {
+                log.error("AI vision provider returned HTTP status {}: {}", response.statusCode(), response.body());
+                throw new RuntimeException("AI vision provider returned HTTP " + response.statusCode() + ": " + response.body());
+            }
+        } catch (Exception e) {
+            log.error("AI Vision generation failed: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate content from image: " + e.getMessage(), e);
         }
     }
 

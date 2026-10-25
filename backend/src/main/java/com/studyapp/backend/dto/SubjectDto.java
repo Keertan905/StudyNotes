@@ -80,4 +80,42 @@ public class SubjectDto {
         private boolean completed;
         private String importance;
     }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ExtractedSubject {
+        private String name;
+        private String code;
+        private Integer semester;
+        private String color;
+        private String subjectType; // e.g. "CORE / THEORY", "ELECTIVE", "PRACTICAL / LAB"
+        private boolean needsReview;
+        private String reviewReason;
+        private Integer orderIndex;
+        private List<UnitRequest> units;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SyllabusAiExtractResponse {
+        private List<ExtractedSubject> subjects;
+        private String extractionSource; // "IMAGE_OCR", "PDF_DOCUMENT", "RAW_TEXT"
+        private String rawNotes;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class BatchImportRequest {
+        @jakarta.validation.constraints.NotEmpty(message = "At least one subject is required for import")
+        private List<Request> subjects;
+    }
 }

@@ -7,9 +7,13 @@ const api = axios.create({
   },
 });
 
-// Attach JWT token to every request
+// Attach JWT token to every request and prevent duplicate /api prefix
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Strip redundant leading '/api' if caller provided '/api/...'
+    if (config.url?.startsWith('/api/')) {
+      config.url = config.url.substring(4);
+    }
     const token = localStorage.getItem('token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;

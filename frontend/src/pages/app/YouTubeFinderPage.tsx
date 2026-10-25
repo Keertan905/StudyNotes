@@ -8,8 +8,6 @@ import {
   ThumbsUp, 
   ExternalLink, 
   Play, 
-  SlidersHorizontal, 
-  Globe, 
   GraduationCap, 
   Info, 
   X, 
@@ -26,28 +24,15 @@ import { subjectService } from "../../services/subject.service";
 import type { SubjectItem } from "../../services/subject.service";
 import toast from "react-hot-toast";
 
-const SUGGESTED_TOPICS = [
-  "Binary Search Trees",
-  "Dynamic Programming",
-  "Dijkstra's Shortest Path",
-  "Operating System Process Scheduling",
-  "TCP/IP 3-Way Handshake",
-  "Database Normalization 1NF to BCNF",
-  "Eigenvalues & Eigenvectors",
-  "Convolutional Neural Networks"
-];
-
 export default function YouTubeFinderPage() {
   const searchInputId = useId();
   const subjectSelectId = useId();
-  const sortSelectId = useId();
-  const languageSelectId = useId();
   const navigate = useNavigate();
 
   // Search & Filter State
   const [query, setQuery] = useState("Binary Search");
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [sortBy, setSortBy] = useState<YouTubeSearchParams["sortBy"]>("BEST_MATCH");
+  const [sortBy] = useState<YouTubeSearchParams["sortBy"]>("BEST_MATCH");
   const [durationFilter, setDurationFilter] = useState<YouTubeSearchParams["durationFilter"]>("ALL");
   const [language, setLanguage] = useState<YouTubeSearchParams["language"]>("ALL");
   const [difficulty, setDifficulty] = useState<YouTubeSearchParams["difficulty"]>("ALL");
@@ -146,11 +131,6 @@ export default function YouTubeFinderPage() {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     executeSearch();
-  };
-
-  const handleQuickTopic = (topic: string) => {
-    setQuery(topic);
-    executeSearch(topic);
   };
 
   const handleSubjectChange = (subjectName: string) => {
@@ -340,121 +320,6 @@ export default function YouTubeFinderPage() {
             </button>
           </div>
         </form>
-
-        {/* Quick Suggestion Topic Chips */}
-        <div className="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-amber-500" />
-            Popular:
-          </span>
-          {SUGGESTED_TOPICS.map((topic) => (
-            <button
-              key={topic}
-              type="button"
-              onClick={() => handleQuickTopic(topic)}
-              className="px-3 py-1 rounded-xl text-xs font-medium bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-transparent whitespace-nowrap transition-all"
-            >
-              {topic}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Filter & Sorting Controls Toolbar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        {/* Left: Duration & Difficulty Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Duration Filter Chips */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-            {[
-              { id: "ALL", label: "Any Length" },
-              { id: "SHORT", label: "< 4m" },
-              { id: "MEDIUM", label: "4–20m" },
-              { id: "LONG", label: "> 20m Deep Dive" },
-            ].map((d) => (
-              <button
-                key={d.id}
-                onClick={() => {
-                  setDurationFilter(d.id as any);
-                  setTimeout(() => executeSearch(), 50);
-                }}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  durationFilter === d.id
-                    ? "bg-white text-slate-900 shadow-xs"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Difficulty / Learning Style Chips */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-            {[
-              { id: "ALL", label: "All Styles" },
-              { id: "BEGINNER", label: "Beginner" },
-              { id: "EXAM_CRASH_COURSE", label: "Crash Course" },
-              { id: "ADVANCED", label: "Advanced" },
-            ].map((diff) => (
-              <button
-                key={diff.id}
-                onClick={() => {
-                  setDifficulty(diff.id as any);
-                  setTimeout(() => executeSearch(), 50);
-                }}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  difficulty === diff.id
-                    ? "bg-white text-slate-900 shadow-xs"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                {diff.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Right: Sort By & Language Selectors */}
-        <div className="flex items-center gap-3">
-          {/* Language Selector */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-            <Globe className="w-3.5 h-3.5 text-slate-400" />
-            <select
-              id={languageSelectId}
-              value={language}
-              onChange={(e) => {
-                setLanguage(e.target.value as any);
-                setTimeout(() => executeSearch(), 50);
-              }}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer"
-            >
-              <option value="ALL">All Languages</option>
-              <option value="en">English</option>
-              <option value="hi">Hindi (हिन्दी)</option>
-              <option value="es">Spanish (Español)</option>
-            </select>
-          </div>
-
-          {/* Sort By Selector */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-            <select
-              id={sortSelectId}
-              value={sortBy}
-              onChange={(e) => {
-                setSortBy(e.target.value as any);
-                setTimeout(() => executeSearch(), 50);
-              }}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer"
-            >
-              <option value="BEST_MATCH">Best Match (AI Ranked)</option>
-              <option value="MOST_VIEWED">Most Viewed</option>
-              <option value="NEWEST">Newest First</option>
-              <option value="TRENDING_ESTIMATE">Trending Velocity</option>
-            </select>
-          </div>
-        </div>
       </div>
 
       {/* Results Header */}

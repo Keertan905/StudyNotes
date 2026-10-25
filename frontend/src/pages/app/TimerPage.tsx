@@ -45,7 +45,7 @@ export default function TimerPage() {
   // Link to Subject/Topic
   const [subjects, setSubjects] = useState<SubjectItem[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | undefined>(undefined);
-  const [sessionTopic, setSessionTopic] = useState("");
+  const [sessionTopic] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
 
   // History & Tasks
@@ -306,22 +306,6 @@ export default function TimerPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Pomodoro Circular Timer (7 cols) */}
         <div className="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col items-center justify-between space-y-8">
-          {/* Mode Switcher Pill */}
-          <div className="flex items-center gap-1.5 p-1.5 bg-slate-100 rounded-2xl border border-slate-200/80">
-            {(["POMODORO", "SHORT_BREAK", "LONG_BREAK", "CUSTOM"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => switchMode(m)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  timerMode === m
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                {MODE_CONFIG[m].label}
-              </button>
-            ))}
-          </div>
 
           {/* Circular SVG Gauge with Countdown */}
           <div className="relative flex items-center justify-center my-4">
@@ -400,40 +384,9 @@ export default function TimerPage() {
             </button>
           </div>
 
-          {/* Focus Topic & Subject Linking */}
-          <div className="w-full pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+          {/* Session Notes */}
+          <div className="w-full pt-6 border-t border-slate-100 text-left">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Target Subject
-              </label>
-              <select
-                value={selectedSubjectId || ""}
-                onChange={(e) => setSelectedSubjectId(e.target.value ? Number(e.target.value) : undefined)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Select a subject...</option>
-                {subjects.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Session Focus / Topic
-              </label>
-              <input
-                type="text"
-                value={sessionTopic}
-                onChange={(e) => setSessionTopic(e.target.value)}
-                placeholder="e.g. Page replacement algorithms"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-slate-400"
-              />
-            </div>
-
-            <div className="md:col-span-2">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Session Notes & Key Reflections
               </label>

@@ -94,7 +94,12 @@ public class DiagramService {
                 "\nDiagram Type: " + diagramType + "\nComplexity: " + complexity +
                 (context.isBlank() ? "" : "\nAdditional Context/Syllabus Snippet:\n" + context);
 
-        String rawOutput = aiProvider.generate(systemPrompt, userPrompt);
+        String rawOutput = null;
+        try {
+            rawOutput = aiProvider.generate(systemPrompt, userPrompt);
+        } catch (Exception e) {
+            log.warn("AI diagram generation call failed: {}. Falling back to educational diagram.", e.getMessage());
+        }
         DiagramDto.DiagramPayload payload = tryParsePayload(rawOutput);
 
         if (payload == null || payload.getNodes() == null || payload.getNodes().isEmpty()) {

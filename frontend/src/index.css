@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -19,4 +19,15 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     @apply bg-slate-50 text-slate-900 antialiased;
   }
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -109,4 +109,24 @@ public class SubjectController {
     ) {
         return ResponseEntity.ok(subjectService.extractSyllabus(file, text));
     }
+
+    @PostMapping(value = "/ai-extract-syllabus", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Extract full subject details, units, and topics using OCR and AI from syllabus image, PDF, or text")
+    public ResponseEntity<SubjectDto.SyllabusAiExtractResponse> aiExtractSyllabus(
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "text", required = false) String text,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(subjectService.aiExtractSyllabus(file, text, authentication != null ? authentication.getName() : null));
+    }
+
+    @PostMapping("/batch-import")
+    @Operation(summary = "Batch import confirmed subjects, units, and topics into the database")
+    public ResponseEntity<List<SubjectDto.Response>> batchImportSubjects(
+            @Valid @RequestBody SubjectDto.BatchImportRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(subjectService.batchImportSubjects(request, authentication.getName()));
+    }
 }

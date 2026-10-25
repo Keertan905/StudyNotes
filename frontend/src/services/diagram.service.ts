@@ -77,28 +77,28 @@ export interface DiagramResponse {
 
 export const diagramService = {
   async generate(data: GenerateDiagramRequest): Promise<DiagramPayload> {
-    const res = await api.post<DiagramPayload>('/api/diagrams/generate', data);
+    const res = await api.post<DiagramPayload>('/diagrams/generate', data);
     return res.data;
   },
 
   async save(data: SaveDiagramRequest): Promise<DiagramResponse> {
-    const res = await api.post<DiagramResponse>('/api/diagrams', data);
+    const res = await api.post<DiagramResponse>('/diagrams', data);
     return res.data;
   },
 
   async getAll(subjectId?: number): Promise<DiagramResponse[]> {
-    const res = await api.get<DiagramResponse[]>('/api/diagrams', {
+    const res = await api.get<DiagramResponse[]>('/diagrams', {
       params: subjectId ? { subjectId } : undefined
     });
     return res.data;
   },
 
   async getById(id: number): Promise<DiagramResponse> {
-    const res = await api.get<DiagramResponse>(`/api/diagrams/${id}`);
+    const res = await api.get<DiagramResponse>(`/diagrams/${id}`);
     return res.data;
   },
 
   async delete(id: number): Promise<void> {
-    await api.delete(`/api/diagrams/${id}`);
+    await api.delete(`/diagrams/${id}`);
   }
 };

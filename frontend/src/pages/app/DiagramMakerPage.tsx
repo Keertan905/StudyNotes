@@ -14,9 +14,6 @@ import {
   Trash2, 
   FolderOpen, 
   X, 
-  Info, 
-  CheckCircle, 
-  Zap, 
   Code
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -407,35 +404,14 @@ export default function DiagramMakerPage() {
             )}
           </button>
         </div>
-
-        {/* Quick Presets */}
-        <div className="pt-2 border-t border-slate-100 flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Try Examples:</span>
-          {PRESETS.map((p, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => {
-                setTopic(p.topic);
-                setDiagramType(p.type);
-                setSelectedSubject(p.subject);
-                handleGenerate(p.topic, p.type, p.subject);
-              }}
-              className="text-xs px-2.5 py-1 rounded-md bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 transition"
-            >
-              {p.topic}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Main Canvas Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 space-y-4">
-          <div 
-            ref={containerRef}
-            className="relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl h-[620px] select-none flex flex-col justify-between"
-          >
+      <div className="w-full space-y-4">
+        <div 
+          ref={containerRef}
+          className="relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl h-[660px] select-none flex flex-col justify-between"
+        >
             {/* Top Toolbar */}
             <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
               <div className="pointer-events-auto flex items-center gap-2 bg-slate-900/90 backdrop-blur-md border border-slate-800 px-3 py-1.5 rounded-xl shadow-lg text-white">
@@ -710,93 +686,11 @@ export default function DiagramMakerPage() {
                     </span>
                   )}
                 </div>
-                <div>Zoom: {Math.round(zoom * 100)}% | Click node to inspect details</div>
+                <div>Zoom: {Math.round(zoom * 100)}%</div>
               </div>
             )}
           </div>
         </div>
-
-        {/* Right Inspector & Concept Details Drawer */}
-        <div className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                <Info className="w-4 h-4 text-indigo-600" />
-                <span>Concept Inspector</span>
-              </h3>
-              {selectedNode && (
-                <button
-                  onClick={() => setSelectedNode(null)}
-                  className="text-slate-400 hover:text-slate-600 p-1"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {selectedNode ? (
-              <div className="space-y-4">
-                <div>
-                  <span
-                    className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider text-white mb-2"
-                    style={{ backgroundColor: selectedNode.color || '#6366f1' }}
-                  >
-                    {selectedNode.category}
-                  </span>
-                  <h4 className="text-lg font-bold text-slate-900">{selectedNode.label}</h4>
-                </div>
-
-                <div className="space-y-1">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Definition</span>
-                  <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200/60">
-                    {selectedNode.description || 'Core algorithmic or conceptual stage in the process.'}
-                  </p>
-                </div>
-
-                {selectedNode.examTip && (
-                  <div className="space-y-1">
-                    <span className="text-xs font-bold text-amber-600 uppercase tracking-wider flex items-center gap-1">
-                      <Zap className="w-3.5 h-3.5" /> High-Yield Exam Tip
-                    </span>
-                    <p className="text-xs text-amber-900 bg-amber-50/80 border border-amber-200 p-3 rounded-lg leading-relaxed">
-                      {selectedNode.examTip}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : payload ? (
-              <div className="space-y-4">
-                <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-                  <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-1">
-                    Overview Summary
-                  </h4>
-                  <p className="text-xs text-indigo-800 leading-relaxed">{payload.summary}</p>
-                </div>
-
-                {payload.keyTakeaways && payload.keyTakeaways.length > 0 && (
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                      Key Takeaways
-                    </h4>
-                    <ul className="space-y-2">
-                      {payload.keyTakeaways.map((tip, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-xs text-slate-700">
-                          <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                          <span>{tip}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="py-12 text-center text-slate-400 text-xs">
-                Select any node on the diagram canvas to view its academic definition, parameters, and exam tips.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Revision Infographic Educational Breakdown Section */}
       {payload && payload.sections && payload.sections.length > 0 && (
