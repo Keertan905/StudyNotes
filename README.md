@@ -64,11 +64,11 @@ app.ai.max-tokens=4096
 ### 2. Google YouTube Data API v3 (AI Video Learning Finder)
 Configured in `backend/src/main/resources/application.properties`:
 ```properties
-app.youtube.api-key=${YOUTUBE_API_KEY:}
+app.youtube.api-key=${GOOGLE_API_KEY:${YOUTUBE_API_KEY:}}
 app.youtube.max-results=20
 app.youtube.timeout-seconds=15
 ```
-*(Get a free key from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) and enable "YouTube Data API v3").*
+*(Supports `GOOGLE_API_KEY` or `YOUTUBE_API_KEY` system environment variable. Get a key from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) and enable "YouTube Data API v3").*
 
 ---
 

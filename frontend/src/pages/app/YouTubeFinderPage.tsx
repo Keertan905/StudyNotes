@@ -234,7 +234,7 @@ export default function YouTubeFinderPage() {
                 <div className="mt-3 bg-white/80 backdrop-blur-xs p-3 rounded-xl border border-amber-200 text-xs text-slate-700 space-y-1.5 font-mono">
                   <p className="font-sans font-bold text-slate-900 text-[11px]">Configuration Steps:</p>
                   <p>1. Get a free API key at <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline font-semibold">Google Cloud Console</a> & enable &quot;YouTube Data API v3&quot;.</p>
-                  <p>2. Set environment variable <code className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded font-bold">YOUTUBE_API_KEY=AIzaSy...</code> or update <code className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded font-bold">app.youtube.api-key</code> in <code className="text-indigo-600">backend/src/main/resources/application.properties</code>.</p>
+                  <p>2. Set environment variable <code className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded font-bold">GOOGLE_API_KEY=your-key</code> (or <code className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded font-bold">YOUTUBE_API_KEY</code>) or update <code className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded font-bold">app.youtube.api-key</code> in <code className="text-indigo-600">backend/src/main/resources/application.properties</code>.</p>
                   <p>3. Restart the backend service. All video data will stream live without quotas.</p>
                 </div>
               </div>

@@ -29,11 +29,15 @@ pnpm-debug.log*
 
 # Environment and Secrets
 .env
+.env*
+*.env
 .env.local
 .env.*.local
 *.local
 *-local.properties
 application-local.properties
+local.properties
+secrets.properties
 
 # File Uploads and Runtime Storage
 uploads/
